@@ -36,5 +36,3 @@ module.exports =
 	apis:
 		clsi:
 			url: "http://localhost:3013"
-
-
