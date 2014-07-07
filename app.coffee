@@ -19,7 +19,7 @@ app = express()
 app.use Metrics.http.monitor(logger)
 
 # Compile requests can take longer than the default two
-# minutes (including file download time), so bump up the 
+# minutes (including file download time), so bump up the
 # timeout a bit.
 TIMEOUT = threeMinutes = 3 * 60 * 1000
 app.use (req, res, next) ->
@@ -50,10 +50,12 @@ resCacher =
 	body:{}
 	setContentType:"application/json"
 
-do runSmokeTest = ->
-	logger.log("running smoke tests")
-	smokeTest.run(require.resolve(__dirname + "/test/smoke/js/SmokeTests.js"))({}, resCacher)
-	setTimeout(runSmokeTest, 20 * 1000)
+if Settings.shouldSmokeTest
+	do runSmokeTest = ->
+		logger.log("running smoke tests")
+		logger.log("To disable smoke tests, set 'shouldSmokeTest' to false in settings file.")
+		smokeTest.run(require.resolve(__dirname + "/test/smoke/js/SmokeTests.js"))({}, resCacher)
+		setTimeout(runSmokeTest, 20 * 1000)
 
 app.get "/health_check", (req, res)->
 	res.contentType(resCacher?.setContentType)
