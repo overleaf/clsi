@@ -8,7 +8,7 @@ Metrics = require "./Metrics"
 child_process = require "child_process"
 
 module.exports = CompileManager =
-	doCompile: (request, callback = (error, outputFiles) ->) ->
+	doCompile: (request, callback = (error, outputFiles, output) ->) ->
 		compileDir = Path.join(Settings.path.compilesDir, request.project_id)
 
 		timer = new Metrics.Timer("write-to-disk")
@@ -25,14 +25,14 @@ module.exports = CompileManager =
 				mainFile:  request.rootResourcePath
 				compiler:  request.compiler
 				timeout:   request.timeout
-			}, (error) ->
+			}, (error, output = {}) ->
 				return callback(error) if error?
 				logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "done compile"
 				timer.done()
 
 				OutputFileFinder.findOutputFiles request.resources, compileDir, (error, outputFiles) ->
 					return callback(error) if error?
-					callback null, outputFiles
+					callback null, outputFiles, output
 	
 	clearProject: (project_id, _callback = (error) ->) ->
 		callback = (error) ->

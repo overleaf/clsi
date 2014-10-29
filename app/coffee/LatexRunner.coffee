@@ -5,7 +5,7 @@ Metrics = require "./Metrics"
 CommandRunner = require(Settings.clsi?.commandRunner or "./CommandRunner")
 
 module.exports = LatexRunner =
-	runLatex: (project_id, options, callback = (error) ->) ->
+	runLatex: (project_id, options, callback = (error, streams) ->) ->
 		{directory, mainFile, compiler, timeout} = options
 		compiler ||= "pdflatex"
 		timeout  ||= 60000 # milliseconds
@@ -13,8 +13,8 @@ module.exports = LatexRunner =
 		logger.log directory: directory, compiler: compiler, timeout: timeout, mainFile: mainFile, "starting compile"
 
 		# We want to run latexmk on the tex file which we will automatically
-		# generate from the Rtex/Rmd/md file.
-		mainFile = mainFile.replace(/\.(Rtex|md|Rmd)$/, ".tex")
+		# generate from the Rtex file.
+		mainFile = mainFile.replace(/\.Rtex$/, ".tex")
 
 		if compiler == "pdflatex"
 			command = LatexRunner._pdflatexCommand mainFile
@@ -24,6 +24,8 @@ module.exports = LatexRunner =
 			command = LatexRunner._xelatexCommand mainFile
 		else if compiler == "lualatex"
 			command = LatexRunner._lualatexCommand mainFile
+		else if compiler == "python"
+			command = LatexRunner._pythonCommand mainFile
 		else
 			return callback new Error("unknown compiler: #{compiler}")
 
@@ -54,4 +56,6 @@ module.exports = LatexRunner =
 			"-pdf", "-e", "$pdflatex='lualatex -synctex=1 -interaction=batchmode %O %S'",
 			Path.join("$COMPILE_DIR", mainFile)
 		]
+		
+	_pythonCommand: (mainFile) -> ["python", mainFile]
 

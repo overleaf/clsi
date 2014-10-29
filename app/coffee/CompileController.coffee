@@ -13,7 +13,7 @@ module.exports = CompileController =
 			request.project_id = req.params.project_id
 			ProjectPersistenceManager.markProjectAsJustAccessed request.project_id, (error) ->
 				return next(error) if error?
-				CompileManager.doCompile request, (error, outputFiles = []) ->
+				CompileManager.doCompile request, (error, outputFiles = [], output = {}) ->
 					if error?
 						logger.error err: error, project_id: request.project_id, "error running compile"
 						if error.timedout
@@ -35,6 +35,7 @@ module.exports = CompileController =
 							outputFiles: outputFiles.map (file) ->
 								url: "#{Settings.apis.clsi.url}/project/#{request.project_id}/output/#{file.path}"
 								type: file.type
+							output: output
 					}
 		
 	clearCache: (req, res, next = (error) ->) ->

@@ -26,6 +26,10 @@ describe "CompileManager", ->
 				path: "output.pdf"
 				type: "pdf"
 			}]
+			@output = {
+				stdout: "stdout",
+				stderr: "stderr"
+			}
 			@request =
 				resources: @resources = "mock-resources"
 				rootResourcePath: @rootResourcePath = "main.tex"
@@ -35,7 +39,7 @@ describe "CompileManager", ->
 			@Settings.compileDir = "compiles"
 			@compileDir = "#{@Settings.path.compilesDir}/#{@project_id}"
 			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(3)
-			@LatexRunner.runLatex = sinon.stub().callsArg(2)
+			@LatexRunner.runLatex = sinon.stub().callsArgWith(2, null, @output)
 			@OutputFileFinder.findOutputFiles = sinon.stub().callsArgWith(2, null, @output_files)
 			@CompileManager.doCompile @request, @callback
 
@@ -59,8 +63,8 @@ describe "CompileManager", ->
 				.calledWith(@resources, @compileDir)
 				.should.equal true
 
-		it "should return the output files", ->
-			@callback.calledWith(null, @output_files).should.equal true
+		it "should return the output files and output", ->
+			@callback.calledWith(null, @output_files, @output).should.equal true
 
 	describe "clearProject", ->
 		describe "succesfully", ->
