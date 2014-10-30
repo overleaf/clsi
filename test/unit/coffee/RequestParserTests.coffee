@@ -46,7 +46,7 @@ describe "RequestParser", ->
 			@RequestParser.parse @validRequest, @callback
 
 		it "should return an error", ->
-			@callback.calledWith("compiler attribute should be one of: pdflatex, latex, xelatex, lualatex, python")
+			@callback.calledWith("compiler attribute should be one of: pdflatex, latex, xelatex, lualatex, python, r")
 				.should.equal true
 
 	describe "without a compiler specified", ->
