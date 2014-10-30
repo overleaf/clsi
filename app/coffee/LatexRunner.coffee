@@ -26,6 +26,8 @@ module.exports = LatexRunner =
 			command = LatexRunner._lualatexCommand mainFile
 		else if compiler == "python"
 			command = LatexRunner._pythonCommand mainFile
+		else if compiler == "r"
+			command = LatexRunner._rCommand mainFile
 		else
 			return callback new Error("unknown compiler: #{compiler}")
 
@@ -58,4 +60,6 @@ module.exports = LatexRunner =
 		]
 		
 	_pythonCommand: (mainFile) -> ["python", mainFile]
+
+	_rCommand: (mainFile) -> ["R", "CMD", "BATCH", mainFile]
 
