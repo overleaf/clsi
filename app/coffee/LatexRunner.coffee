@@ -61,5 +61,5 @@ module.exports = LatexRunner =
 		
 	_pythonCommand: (mainFile) -> ["python", mainFile]
 
-	_rCommand: (mainFile) -> ["R", "CMD", "BATCH", mainFile]
+	_rCommand: (mainFile) -> ["R", "--no-save", "--quiet", "-f", mainFile]
 
