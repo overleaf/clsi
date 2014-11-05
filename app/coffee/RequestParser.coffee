@@ -1,6 +1,9 @@
 module.exports = RequestParser =
 	VALID_COMPILERS: ["pdflatex", "latex", "xelatex", "lualatex", "python", "r"]
-	MAX_TIMEOUT: 300
+	MAX_TIMEOUT:    300  # Seconds
+	MAX_MEMORY:     4096 # Mb
+	MAX_CPU_SHARES: 4096 # Relative (1024 default)
+	MAX_PROCESSES:  1024
 
 	parse: (body, callback = (error, data) ->) ->
 		response = {}
@@ -17,14 +20,35 @@ module.exports = RequestParser =
 				validValues: @VALID_COMPILERS
 				default: "pdflatex"
 				type: "string"
+				
 			response.timeout = @_parseAttribute "timeout",
 				compile.options.timeout
 				default: RequestParser.MAX_TIMEOUT
 				type: "number"
-
 			if response.timeout > RequestParser.MAX_TIMEOUT
 				response.timeout = RequestParser.MAX_TIMEOUT
 			response.timeout = response.timeout * 1000 # milliseconds
+			
+			response.memory = @_parseAttribute "memory",
+				compile.options.memory
+				default: RequestParser.MAX_MEMORY
+				type: "number"
+			if response.memory > RequestParser.MAX_MEMORY
+				response.memory = RequestParser.MAX_MEMORY
+				
+			response.processes = @_parseAttribute "processes",
+				compile.options.processes
+				default: RequestParser.MAX_PROCESSES
+				type: "number"
+			if response.processes > RequestParser.MAX_PROCESSES
+				response.processes = RequestParser.MAX_PROCESSES
+				
+			response.cpu_shares = @_parseAttribute "cpu_shares",
+				compile.options.cpu_shares
+				default: RequestParser.MAX_CPU_SHARES
+				type: "number"
+			if response.cpu_shares > RequestParser.MAX_CPU_SHARES
+				response.cpu_shares = RequestParser.MAX_CPU_SHARES
 
 			response.resources = (@_parseResource(resource) for resource in (compile.resources or []))
 			response.rootResourcePath = @_parseAttribute "rootResourcePath",

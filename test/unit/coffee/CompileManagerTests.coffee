@@ -36,6 +36,9 @@ describe "CompileManager", ->
 				project_id: @project_id = "project-id-123"
 				compiler: @compiler = "pdflatex"
 				timeout: @timeout = 42000
+				processes: @processes = 42
+				memory:    @memory = 1024
+				cpu_shares: @cpu_shares = 2048
 			@Settings.compileDir = "compiles"
 			@compileDir = "#{@Settings.path.compilesDir}/#{@project_id}"
 			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(3)
@@ -48,13 +51,16 @@ describe "CompileManager", ->
 				.calledWith(@project_id, @resources, @compileDir)
 				.should.equal true
 
-		it "should run LaTeX", ->
+		it "should run LaTeX with the given limits", ->
 			@LatexRunner.runLatex
 				.calledWith(@project_id, {
 					directory: @compileDir
 					mainFile:  @rootResourcePath
 					compiler:  @compiler
 					timeout:   @timeout
+					processes: @processes = 42
+					memory:    @memory = 1024
+					cpu_shares: @cpu_shares = 2048
 				})
 				.should.equal true
 

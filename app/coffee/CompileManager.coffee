@@ -25,6 +25,9 @@ module.exports = CompileManager =
 				mainFile:  request.rootResourcePath
 				compiler:  request.compiler
 				timeout:   request.timeout
+				processes: request.processes
+				memory:    request.memory
+				cpu_shares: request.cpu_shares
 			}, (error, output = {}) ->
 				return callback(error) if error?
 				logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "done compile"

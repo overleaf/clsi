@@ -32,12 +32,20 @@ describe "LatexRunner", ->
 					directory: @directory
 					mainFile:  @mainFile
 					compiler:  @compiler
-					timeout:   @timeout = 42000
+					timeout:   timeout = 42000
+					processes: @processes = 42
+					memory:    @memory = 1024
+					cpu_shares: @cpu_shares = 2048
 					@callback
 
-			it "should run the latex command", ->
+			it "should run the latex command with the given limits", ->
 				@CommandRunner.run
-					.calledWith(@project_id, sinon.match.any, @directory, @timeout)
+					.calledWith(@project_id, sinon.match.any, @directory, {
+						timeout: @timeout
+						memory: @memory
+						cpu_shares: @cpu_shares
+						processes: @processes
+					})
 					.should.equal true
 
 		describe "with an .Rtex main file", ->
@@ -46,7 +54,6 @@ describe "LatexRunner", ->
 					directory: @directory
 					mainFile:  "main-file.Rtex"
 					compiler:  @compiler
-					timeout:   @timeout = 42000
 					@callback
 
 			it "should run the latex command on the equivalent .tex file", ->

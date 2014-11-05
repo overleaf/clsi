@@ -16,8 +16,11 @@ describe "RequestParser", ->
 			compile:
 				token: "token-123"
 				options:
-					compiler: "pdflatex"
-					timeout:  42
+					compiler:   "pdflatex"
+					timeout:    42
+					memory:     1024
+					cpu_shares: 2048
+					processes:  1024
 				resources: []
 		@RequestParser = SandboxedModule.require modulePath
 	
@@ -79,6 +82,75 @@ describe "RequestParser", ->
 
 		it "should set the timeout (in milliseconds)", ->
 			@data.timeout.should.equal @validRequest.compile.options.timeout * 1000
+
+	describe "without a cpu_shares limit specified", ->
+		beforeEach ->
+			delete @validRequest.compile.options.cpu_shares
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the cpu_shares limit to MAX_CPU_SHARES", ->
+			@data.cpu_shares.should.equal @RequestParser.MAX_CPU_SHARES
+
+	describe "with a cpu_shares limit larger than the maximum", ->
+		beforeEach ->
+			@validRequest.compile.options.cpu_shares = @RequestParser.MAX_CPU_SHARES + 1
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the cpu_shares limit to MAX_CPU_SHARES", ->
+			@data.cpu_shares.should.equal @RequestParser.MAX_CPU_SHARES
+
+	describe "with a cpu_shares limit", ->
+		beforeEach ->
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the cpu_shares limit (in milliseconds)", ->
+			@data.cpu_shares.should.equal @validRequest.compile.options.cpu_shares
+
+	describe "without a processes limit specified", ->
+		beforeEach ->
+			delete @validRequest.compile.options.processes
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the processes limit to MAX_PROCESSES", ->
+			@data.processes.should.equal @RequestParser.MAX_PROCESSES
+
+	describe "with a processes limit larger than the maximum", ->
+		beforeEach ->
+			@validRequest.compile.options.processes = @RequestParser.MAX_PROCESSES + 1
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the processes limit to MAX_PROCESSES", ->
+			@data.processes.should.equal @RequestParser.MAX_PROCESSES
+
+	describe "with a processes limit", ->
+		beforeEach ->
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the processes limit", ->
+			@data.processes.should.equal @validRequest.compile.options.processes
+
+	describe "without a memory limit specified", ->
+		beforeEach ->
+			delete @validRequest.compile.options.memory
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the memory limit to MAX_MEMORY", ->
+			@data.memory.should.equal @RequestParser.MAX_MEMORY
+
+	describe "with a memory limit larger than the maximum", ->
+		beforeEach ->
+			@validRequest.compile.options.memory = @RequestParser.MAX_MEMORY + 1
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the memory limit to MAX_MEMORY", ->
+			@data.memory.should.equal @RequestParser.MAX_MEMORY
+
+	describe "with a memory limit", ->
+		beforeEach ->
+			@RequestParser.parse @validRequest, (error, @data) =>
+
+		it "should set the memory limit", ->
+			@data.memory.should.equal @validRequest.compile.options.memory
 	
 	describe "with a resource without a path", ->
 		beforeEach ->
