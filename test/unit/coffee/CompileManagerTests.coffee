@@ -41,20 +41,19 @@ describe "CompileManager", ->
 				cpu_shares: @cpu_shares = 2048
 			@Settings.compileDir = "compiles"
 			@compileDir = "#{@Settings.path.compilesDir}/#{@project_id}"
-			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(3)
+			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(2)
 			@LatexRunner.runLatex = sinon.stub().callsArgWith(2, null, @output)
 			@OutputFileFinder.findOutputFiles = sinon.stub().callsArgWith(2, null, @output_files)
 			@CompileManager.doCompile @request, @callback
 
 		it "should write the resources to disk", ->
 			@ResourceWriter.syncResourcesToDisk
-				.calledWith(@project_id, @resources, @compileDir)
+				.calledWith(@project_id, @resources)
 				.should.equal true
 
 		it "should run LaTeX with the given limits", ->
 			@LatexRunner.runLatex
 				.calledWith(@project_id, {
-					directory: @compileDir
 					mainFile:  @rootResourcePath
 					compiler:  @compiler
 					timeout:   @timeout
@@ -66,53 +65,11 @@ describe "CompileManager", ->
 
 		it "should find the output files", ->
 			@OutputFileFinder.findOutputFiles
-				.calledWith(@resources, @compileDir)
+				.calledWith(@project_id, @resources)
 				.should.equal true
 
 		it "should return the output files and output", ->
 			@callback.calledWith(null, @output_files, @output).should.equal true
-
-	describe "clearProject", ->
-		describe "succesfully", ->
-			beforeEach ->
-				@Settings.compileDir = "compiles"
-				@proc = new EventEmitter()
-				@proc.stdout = new EventEmitter()
-				@proc.stderr = new EventEmitter()
-				@child_process.spawn = sinon.stub().returns(@proc)
-				@CompileManager.clearProject @project_id, @callback
-				@proc.emit "close", 0
-
-			it "should remove the project directory", ->
-				@child_process.spawn
-					.calledWith("rm", ["-r", "#{@Settings.path.compilesDir}/#{@project_id}"])
-					.should.equal true
-
-			it "should call the callback", ->
-				@callback.called.should.equal true
-
-		describe "with a non-success status code", ->
-			beforeEach ->
-				@Settings.compileDir = "compiles"
-				@proc = new EventEmitter()
-				@proc.stdout = new EventEmitter()
-				@proc.stderr = new EventEmitter()
-				@child_process.spawn = sinon.stub().returns(@proc)
-				@CompileManager.clearProject @project_id, @callback
-				@proc.stderr.emit "data", @error = "oops"
-				@proc.emit "close", 1
-
-			it "should remove the project directory", ->
-				@child_process.spawn
-					.calledWith("rm", ["-r", "#{@Settings.path.compilesDir}/#{@project_id}"])
-					.should.equal true
-
-			it "should call the callback with an error from the stderr", ->
-				@callback
-					.calledWith(new Error())
-					.should.equal true
-
-				@callback.args[0][0].message.should.equal "rm -r #{@Settings.path.compilesDir}/#{@project_id} failed: #{@error}"
 
 	describe "syncing", ->
 		beforeEach ->

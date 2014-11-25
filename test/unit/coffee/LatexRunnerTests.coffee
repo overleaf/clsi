@@ -16,7 +16,6 @@ describe "LatexRunner", ->
 					done: () ->
 			"./CommandRunner": @CommandRunner = {}
 
-		@directory = "/local/compile/directory"
 		@mainFile  = "main-file.tex"
 		@compiler  = "pdflatex"
 		@callback  = sinon.stub()
@@ -24,12 +23,11 @@ describe "LatexRunner", ->
 
 	describe "runLatex", ->
 		beforeEach ->
-			@CommandRunner.run = sinon.stub().callsArg(4)
+			@CommandRunner.run = sinon.stub().callsArg(3)
 
 		describe "normally", ->
 			beforeEach ->
 				@LatexRunner.runLatex @project_id,
-					directory: @directory
 					mainFile:  @mainFile
 					compiler:  @compiler
 					timeout:   timeout = 42000
@@ -40,7 +38,7 @@ describe "LatexRunner", ->
 
 			it "should run the latex command with the given limits", ->
 				@CommandRunner.run
-					.calledWith(@project_id, sinon.match.any, @directory, {
+					.calledWith(@project_id, sinon.match.any, {
 						timeout: @timeout
 						memory: @memory
 						cpu_shares: @cpu_shares
@@ -51,7 +49,6 @@ describe "LatexRunner", ->
 		describe "with an .Rtex main file", ->
 			beforeEach ->
 				@LatexRunner.runLatex @project_id,
-					directory: @directory
 					mainFile:  "main-file.Rtex"
 					compiler:  @compiler
 					@callback

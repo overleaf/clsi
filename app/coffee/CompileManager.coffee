@@ -13,7 +13,7 @@ module.exports = CompileManager =
 
 		timer = new Metrics.Timer("write-to-disk")
 		logger.log project_id: request.project_id, "starting compile"
-		ResourceWriter.syncResourcesToDisk request.project_id, request.resources, compileDir, (error) ->
+		ResourceWriter.syncResourcesToDisk request.project_id, request.resources, (error) ->
 			return callback(error) if error?
 			logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "written files to disk"
 			timer.done()
@@ -21,7 +21,6 @@ module.exports = CompileManager =
 			timer = new Metrics.Timer("run-compile")
 			Metrics.inc("compiles")
 			LatexRunner.runLatex request.project_id, {
-				directory: compileDir
 				mainFile:  request.rootResourcePath
 				compiler:  request.compiler
 				timeout:   request.timeout
@@ -33,28 +32,9 @@ module.exports = CompileManager =
 				logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "done compile"
 				timer.done()
 
-				OutputFileFinder.findOutputFiles request.resources, compileDir, (error, outputFiles) ->
+				OutputFileFinder.findOutputFiles request.project_id, request.resources, (error, outputFiles) ->
 					return callback(error) if error?
 					callback null, outputFiles, output
-	
-	clearProject: (project_id, _callback = (error) ->) ->
-		callback = (error) ->
-			_callback(error)
-			_callback = () ->
-
-		compileDir = Path.join(Settings.path.compilesDir, project_id)
-		proc = child_process.spawn "rm", ["-r", compileDir]
-
-		proc.on "error", callback
-
-		stderr = ""
-		proc.stderr.on "data", (chunk) -> stderr += chunk.toString()
-
-		proc.on "close", (code) ->
-			if code == 0
-				return callback(null)
-			else
-				return callback(new Error("rm -r #{compileDir} failed: #{stderr}"))
 
 	syncFromCode: (project_id, file_name, line, column, callback = (error, pdfPositions) ->) ->
 		# If LaTeX was run in a virtual environment, the file path that synctex expects

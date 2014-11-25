@@ -6,7 +6,7 @@ CommandRunner = require(Settings.clsi?.commandRunner or "./CommandRunner")
 
 module.exports = LatexRunner =
 	runLatex: (project_id, options, callback = (error, streams) ->) ->
-		{directory, mainFile, compiler} = options
+		{mainFile, compiler} = options
 		compiler ||= "pdflatex"
 		
 		limits = {
@@ -16,7 +16,7 @@ module.exports = LatexRunner =
 			processes:  options.processes or 100 # Number of running processes
 		}
 
-		logger.log directory: directory, compiler: compiler, limits: limits, mainFile: mainFile, "starting compile"
+		logger.log compiler: compiler, limits: limits, mainFile: mainFile, "starting compile"
 
 		# We want to run latexmk on the tex file which we will automatically
 		# generate from the Rtex file.
@@ -37,7 +37,7 @@ module.exports = LatexRunner =
 		else
 			return callback new Error("unknown compiler: #{compiler}")
 
-		CommandRunner.run project_id, command, directory, limits, callback
+		CommandRunner.run project_id, command, limits, callback
 
 	_latexmkBaseCommand: [ "latexmk", "-cd", "-f", "-jobname=output", "-auxdir=$COMPILE_DIR", "-outdir=$COMPILE_DIR"]
 

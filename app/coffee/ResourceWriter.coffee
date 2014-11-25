@@ -5,23 +5,24 @@ async = require "async"
 mkdirp = require "mkdirp"
 OutputFileFinder = require "./OutputFileFinder"
 Metrics = require "./Metrics"
+CommandRunner = require "./CommandRunner"
 
 module.exports = ResourceWriter =
-	syncResourcesToDisk: (project_id, resources, basePath, callback = (error) ->) ->
-		@_removeExtraneousFiles resources, basePath, (error) =>
+	syncResourcesToDisk: (project_id, resources, callback = (error) ->) ->
+		@_removeExtraneousFiles project_id, resources, (error) =>
 			return callback(error) if error?
 			jobs = for resource in resources
 				do (resource) =>
-					(callback) => @_writeResourceToDisk(project_id, resource, basePath, callback)
+					(callback) => @_writeResourceToDisk(project_id, resource, callback)
 			async.series jobs, callback
 
-	_removeExtraneousFiles: (resources, basePath, _callback = (error) ->) ->
+	_removeExtraneousFiles: (project_id, resources, _callback = (error) ->) ->
 		timer = new Metrics.Timer("unlink-output-files")
 		callback = (error) ->
 			timer.done()
 			_callback(error)
 
-		OutputFileFinder.findOutputFiles resources, basePath, (error, outputFiles) ->
+		OutputFileFinder.findOutputFiles project_id, resources, (error, outputFiles) ->
 			return callback(error) if error?
 
 			jobs = []
@@ -34,35 +35,16 @@ module.exports = ResourceWriter =
 					if path == "output.pdf" or path == "output.dvi" or path == "output.log"
 						should_delete = true
 					if should_delete
-						jobs.push (callback) -> ResourceWriter._deleteFileIfNotDirectory Path.join(basePath, path), callback
+						jobs.push (callback) ->
+							CommandRunner.deleteFileIfNotDirectory project_id, path, callback
 
 			async.series jobs, callback
 
-	_deleteFileIfNotDirectory: (path, callback = (error) ->) ->
-		fs.stat path, (error, stat) ->
-			return callback(error) if error?
-			if stat.isFile()
-				fs.unlink path, callback
-			else
-				callback()
+	_writeResourceToDisk: (project_id, resource, callback = (error) ->) ->
+		if resource.url?
+			UrlCache.getUrlStream project_id, resource.url, resource.modified, (error, stream) ->
+				return callback(error) if error?
+				CommandRunner.addFileFromStream project_id, resource.path, stream, callback
+		else
+			CommandRunner.addFileFromContent project_id, resource.path, resource.content, callback
 
-	_writeResourceToDisk: (project_id, resource, basePath, callback = (error) ->) ->
-		path = Path.normalize(Path.join(basePath, resource.path))
-		if (path.slice(0, basePath.length) != basePath)
-			return callback new Error("resource path is outside root directory")
-
-		mkdirp Path.dirname(path), (error) ->
-			return callback(error) if error?
-			# TODO: Don't overwrite file if it hasn't been modified
-			if resource.url?
-				UrlCache.downloadUrlToFile(
-					project_id,
-					resource.url,
-					path,
-					resource.modified,
-					callback
-				)
-			else
-				fs.writeFile path, resource.content, callback
-
-		

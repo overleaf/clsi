@@ -8,26 +8,23 @@ expect = require("chai").expect
 describe "OutputFileFinder", ->
 	beforeEach ->
 		@OutputFileFinder = SandboxedModule.require modulePath, requires:
-			"fs": @fs = {}
-			"wrench": @wrench = {}
-		@directory = "/test/dir"
+			"./CommandRunner": @CommandRunner = {}
+		@project_id = "mock-project-id-123"
 		@callback = sinon.stub()
 
 	describe "findOutputFiles", ->
 		beforeEach ->
-			@resource_path = "resource/path.tex"
-			@output_paths   = ["output.pdf", "extra", "extra/file.tex"]
+			@output_paths = ["output.pdf", "extra/file.tex"]
 			@resources = [
 				path: @resource_path = "resource/path.tex"
 			]
-			@OutputFileFinder._isDirectory = (dirPath, callback = (error, directory) ->) =>
-				callback null, dirPath == path.join(@directory, "extra")
-
-			@wrench.readdirRecursive = (dir, callback) =>
-				callback(null, [@resource_path].concat(@output_paths))
-				callback(null, null)
-			sinon.spy @wrench, "readdirRecursive"
-			@OutputFileFinder.findOutputFiles @resources, @directory, (error, @outputFiles) =>
+			@CommandRunner.getAllFiles = sinon.stub().callsArgWith(1, null, @output_paths.concat([@resource_path]))
+			@OutputFileFinder.findOutputFiles @project_id, @resources, (error, @outputFiles) =>
+				
+		it "should get all the files from the CommandRunner", ->
+			@CommandRunner.getAllFiles
+				.calledWith(@project_id)
+				.should.equal true
 
 		it "should only return the output files, not directories or resource paths", ->
 			expect(@outputFiles).to.deep.equal [{

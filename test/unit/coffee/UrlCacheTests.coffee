@@ -124,26 +124,25 @@ describe "UrlCache", ->
 					.calledWith(null, @UrlCache._cacheFilePathForUrl(@project_id, @url))
 					.should.equal true
 
-	describe "downloadUrlToFile", ->
+	describe "getUrlStream", ->
 		beforeEach ->
 			@cachePath = "path/to/cached/url"
-			@destPath = "path/to/destination"
-			@UrlCache._copyFile = sinon.stub().callsArg(2)
+			@fs.createReadStream = sinon.stub().returns(@stream = "mock-stream")
 			@UrlCache._ensureUrlIsInCache = sinon.stub().callsArgWith(3, null, @cachePath)
-			@UrlCache.downloadUrlToFile(@project_id, @url, @destPath, @lastModified, @callback)
+			@UrlCache.getUrlStream(@project_id, @url, @lastModified, @callback)
 
 		it "should ensure the URL is downloaded and updated in the cache", ->
 			@UrlCache._ensureUrlIsInCache
 				.calledWith(@project_id, @url, @lastModified)
 				.should.equal true
 
-		it "should copy the file to the new location", ->
-			@UrlCache._copyFile
-				.calledWith(@cachePath, @destPath)
+		it "should create a stream from the cached file", ->
+			@fs.createReadStream
+				.calledWith(@cachePath)
 				.should.equal true
 
-		it "should call the callback", ->
-			@callback.called.should.equal true
+		it "should call the callback with the stream", ->
+			@callback.calledWith(null, @stream).should.equal true
 
 	describe "_deleteUrlCacheFromDisk", ->
 		beforeEach ->

@@ -7,10 +7,10 @@ logger = require "logger-sharelatex"
 async = require "async"
 
 module.exports = UrlCache =
-	downloadUrlToFile: (project_id, url, destPath, lastModified, callback = (error) ->) ->
+	getUrlStream: (project_id, url, lastModified, callback = (error, stream) ->) ->
 		UrlCache._ensureUrlIsInCache project_id, url, lastModified, (error, pathToCachedUrl) =>
 			return callback(error) if error?
-			UrlCache._copyFile(pathToCachedUrl, destPath, callback)
+			callback null, fs.createReadStream(pathToCachedUrl)
 
 	clearProject: (project_id, callback = (error) ->) ->
 		UrlCache._findAllUrlsInProject project_id, (error, urls) ->
@@ -59,17 +59,6 @@ module.exports = UrlCache =
 
 	_cacheFilePathForUrl: (project_id, url) ->
 		"#{Settings.path.clsiCacheDir}/#{UrlCache._cacheFileNameForUrl(project_id, url)}"
-
-	_copyFile: (from, to, _callback = (error) ->) ->
-		callbackOnce = (error) ->
-			_callback(error)
-			_callback = () ->
-		writeStream = fs.createWriteStream(to)
-		readStream = fs.createReadStream(from)
-		writeStream.on "error", callbackOnce
-		readStream.on "error", callbackOnce
-		writeStream.on "close", () -> callbackOnce()
-		readStream.pipe(writeStream)
 
 	_clearUrlFromCache: (project_id, url, callback = (error) ->) ->
 		UrlCache._clearUrlDetails project_id, url, (error) ->

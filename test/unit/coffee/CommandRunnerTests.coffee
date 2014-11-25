@@ -1,0 +1,56 @@
+SandboxedModule = require('sandboxed-module')
+sinon = require('sinon')
+require('chai').should()
+modulePath = require('path').join __dirname, '../../../app/js/CommandRunner'
+EventEmitter = require("events").EventEmitter
+
+describe "CommandRunner", ->
+	beforeEach ->
+		@CommandRunner = SandboxedModule.require modulePath, requires:
+			"settings-sharelatex": @Settings = { path: compilesDir: "/compiles/dir" }
+			"logger-sharelatex": @logger = { log: sinon.stub() }
+			"child_process": @child_process = {}
+		@project_id = "mock-project-id-123"
+		@callback = sinon.stub()
+
+	describe "clearProject", ->
+		describe "succesfully", ->
+			beforeEach ->
+				@Settings.compileDir = "compiles"
+				@proc = new EventEmitter()
+				@proc.stdout = new EventEmitter()
+				@proc.stderr = new EventEmitter()
+				@child_process.spawn = sinon.stub().returns(@proc)
+				@CommandRunner.clearProject @project_id, @callback
+				@proc.emit "close", 0
+
+			it "should remove the project directory", ->
+				@child_process.spawn
+					.calledWith("rm", ["-r", "#{@Settings.path.compilesDir}/#{@project_id}"])
+					.should.equal true
+
+			it "should call the callback", ->
+				@callback.called.should.equal true
+
+		describe "with a non-success status code", ->
+			beforeEach ->
+				@Settings.compileDir = "compiles"
+				@proc = new EventEmitter()
+				@proc.stdout = new EventEmitter()
+				@proc.stderr = new EventEmitter()
+				@child_process.spawn = sinon.stub().returns(@proc)
+				@CommandRunner.clearProject @project_id, @callback
+				@proc.stderr.emit "data", @error = "oops"
+				@proc.emit "close", 1
+
+			it "should remove the project directory", ->
+				@child_process.spawn
+					.calledWith("rm", ["-r", "#{@Settings.path.compilesDir}/#{@project_id}"])
+					.should.equal true
+
+			it "should call the callback with an error from the stderr", ->
+				@callback
+					.calledWith(new Error())
+					.should.equal true
+
+				@callback.args[0][0].message.should.equal "rm -r #{@Settings.path.compilesDir}/#{@project_id} failed: #{@error}"
