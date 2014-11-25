@@ -25,6 +25,10 @@ module.exports = CommandRunner =
 		proc.on "close", () ->
 			callback(null, {stdout, stderr})
 			
+	initProject: (project_id, callback = (error) ->) ->
+		directory = Path.join(settings.path.compilesDir, project_id)
+		mkdirp directory, callback
+			
 	_getNormalizedPath: (project_id, filePath, callback = (error, path) ->) ->
 		basePath = Path.join(settings.path.compilesDir, project_id)
 		path = Path.normalize(Path.join(basePath, filePath))

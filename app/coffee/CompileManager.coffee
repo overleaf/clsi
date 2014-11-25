@@ -1,6 +1,7 @@
 ResourceWriter = require "./ResourceWriter"
 LatexRunner = require "./LatexRunner"
 OutputFileFinder = require "./OutputFileFinder"
+CommandRunner = require "./CommandRunner"
 Settings = require("settings-sharelatex")
 Path = require "path"
 logger = require "logger-sharelatex"
@@ -9,32 +10,32 @@ child_process = require "child_process"
 
 module.exports = CompileManager =
 	doCompile: (request, callback = (error, outputFiles, output) ->) ->
-		compileDir = Path.join(Settings.path.compilesDir, request.project_id)
-
 		timer = new Metrics.Timer("write-to-disk")
 		logger.log project_id: request.project_id, "starting compile"
-		ResourceWriter.syncResourcesToDisk request.project_id, request.resources, (error) ->
+		CommandRunner.initProject request.project_id, (error) ->
 			return callback(error) if error?
-			logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "written files to disk"
-			timer.done()
-
-			timer = new Metrics.Timer("run-compile")
-			Metrics.inc("compiles")
-			LatexRunner.runLatex request.project_id, {
-				mainFile:  request.rootResourcePath
-				compiler:  request.compiler
-				timeout:   request.timeout
-				processes: request.processes
-				memory:    request.memory
-				cpu_shares: request.cpu_shares
-			}, (error, output = {}) ->
+			ResourceWriter.syncResourcesToDisk request.project_id, request.resources, (error) ->
 				return callback(error) if error?
-				logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "done compile"
+				logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "written files to disk"
 				timer.done()
 
-				OutputFileFinder.findOutputFiles request.project_id, request.resources, (error, outputFiles) ->
+				timer = new Metrics.Timer("run-compile")
+				Metrics.inc("compiles")
+				LatexRunner.runLatex request.project_id, {
+					mainFile:  request.rootResourcePath
+					compiler:  request.compiler
+					timeout:   request.timeout
+					processes: request.processes
+					memory:    request.memory
+					cpu_shares: request.cpu_shares
+				}, (error, output = {}) ->
 					return callback(error) if error?
-					callback null, outputFiles, output
+					logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "done compile"
+					timer.done()
+
+					OutputFileFinder.findOutputFiles request.project_id, request.resources, (error, outputFiles) ->
+						return callback(error) if error?
+						callback null, outputFiles, output
 
 	syncFromCode: (project_id, file_name, line, column, callback = (error, pdfPositions) ->) ->
 		# If LaTeX was run in a virtual environment, the file path that synctex expects

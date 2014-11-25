@@ -12,6 +12,7 @@ describe "CompileManager", ->
 			"./LatexRunner": @LatexRunner = {}
 			"./ResourceWriter": @ResourceWriter = {}
 			"./OutputFileFinder": @OutputFileFinder = {}
+			"./CommandRunner": @CommandRunner = {}
 			"settings-sharelatex": @Settings = { path: compilesDir: "/compiles/dir" }
 			"logger-sharelatex": @logger = { log: sinon.stub() }
 			"child_process": @child_process = {}
@@ -41,10 +42,16 @@ describe "CompileManager", ->
 				cpu_shares: @cpu_shares = 2048
 			@Settings.compileDir = "compiles"
 			@compileDir = "#{@Settings.path.compilesDir}/#{@project_id}"
+			@CommandRunner.initProject = sinon.stub().callsArg(1)
 			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(2)
 			@LatexRunner.runLatex = sinon.stub().callsArgWith(2, null, @output)
 			@OutputFileFinder.findOutputFiles = sinon.stub().callsArgWith(2, null, @output_files)
 			@CompileManager.doCompile @request, @callback
+			
+		it "should init the project", ->
+			@CommandRunner.initProject
+				.calledWith(@project_id)
+				.should.equal true
 
 		it "should write the resources to disk", ->
 			@ResourceWriter.syncResourcesToDisk
