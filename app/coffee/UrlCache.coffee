@@ -7,10 +7,10 @@ logger = require "logger-sharelatex"
 async = require "async"
 
 module.exports = UrlCache =
-	getUrlStream: (project_id, url, lastModified, callback = (error, stream) ->) ->
+	getPathOnDisk: (project_id, url, lastModified, callback = (error, stream) ->) ->
 		UrlCache._ensureUrlIsInCache project_id, url, lastModified, (error, pathToCachedUrl) =>
 			return callback(error) if error?
-			callback null, fs.createReadStream(pathToCachedUrl)
+			callback null, pathToCachedUrl
 
 	clearProject: (project_id, callback = (error) ->) ->
 		UrlCache._findAllUrlsInProject project_id, (error, urls) ->

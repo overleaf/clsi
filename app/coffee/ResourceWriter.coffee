@@ -6,15 +6,13 @@ mkdirp = require "mkdirp"
 OutputFileFinder = require "./OutputFileFinder"
 Metrics = require "./Metrics"
 CommandRunner = require "./CommandRunner"
+logger = require "logger-sharelatex"
 
 module.exports = ResourceWriter =
 	syncResourcesToDisk: (project_id, resources, callback = (error) ->) ->
 		@_removeExtraneousFiles project_id, resources, (error) =>
 			return callback(error) if error?
-			jobs = for resource in resources
-				do (resource) =>
-					(callback) => @_writeResourceToDisk(project_id, resource, callback)
-			async.series jobs, callback
+			@_writeResourcesToDisk(project_id, resources, callback)
 
 	_removeExtraneousFiles: (project_id, resources, _callback = (error) ->) ->
 		timer = new Metrics.Timer("unlink-output-files")
@@ -40,11 +38,22 @@ module.exports = ResourceWriter =
 
 			async.series jobs, callback
 
-	_writeResourceToDisk: (project_id, resource, callback = (error) ->) ->
-		if resource.url?
-			UrlCache.getUrlStream project_id, resource.url, resource.modified, (error, stream) ->
+	_writeResourcesToDisk: (project_id, resources, callback = (error) ->) ->
+		async.mapSeries resources,
+			(resource, callback) ->
+				if resource.url?
+					UrlCache.getPathOnDisk project_id, resource.url, resource.modified, (error, pathOnDisk) ->
+						return callback(error) if error?
+						callback null, {
+							path: resource.path
+							src:  pathOnDisk
+						}
+				else
+					callback null, {
+						path:    resource.path
+						content: resource.content
+					}
+			(error, files) ->
 				return callback(error) if error?
-				CommandRunner.addFileFromStream project_id, resource.path, stream, callback
-		else
-			CommandRunner.addFileFromContent project_id, resource.path, resource.content, callback
+				CommandRunner.addFiles project_id, files, callback
 

@@ -26,7 +26,7 @@ describe "ResourceWriter", ->
 				"resource-2-mock"
 				"resource-3-mock"
 			]
-			@ResourceWriter._writeResourceToDisk = sinon.stub().callsArg(2)
+			@ResourceWriter._writeResourcesToDisk = sinon.stub().callsArg(2)
 			@ResourceWriter._removeExtraneousFiles = sinon.stub().callsArg(2)
 			@ResourceWriter.syncResourcesToDisk(@project_id, @resources, @callback)
 
@@ -35,11 +35,10 @@ describe "ResourceWriter", ->
 				.calledWith(@project_id, @resources)
 				.should.equal true
 
-		it "should write each resource to disk", ->
-			for resource in @resources
-				@ResourceWriter._writeResourceToDisk
-					.calledWith(@project_id, resource)
-					.should.equal true
+		it "should write the resources to disk", ->
+			@ResourceWriter._writeResourcesToDisk
+				.calledWith(@project_id, @resources)
+				.should.equal true
 
 		it "should call the callback", ->
 			@callback.called.should.equal true
@@ -87,25 +86,29 @@ describe "ResourceWriter", ->
 		it "should time the request", ->
 			@Metrics.Timer::done.called.should.equal true
 
-	describe "_writeResourceToDisk", ->
+	describe "_writeResourcesToDisk", ->
 		describe "with a url based resource", ->
 			beforeEach ->
-				@resource =
+				@resources = [
 					path: "main.tex"
 					url: "http://www.example.com/main.tex"
 					modified: Date.now()
-				@UrlCache.getUrlStream = sinon.stub().callsArgWith(3, null, @stream = "mock-stream")
-				@CommandRunner.addFileFromStream = sinon.stub().callsArg(3)
-				@ResourceWriter._writeResourceToDisk(@project_id, @resource, @callback)
+				]
+				@UrlCache.getPathOnDisk = sinon.stub().callsArgWith(3, null, @pathOnDisk = "/path/on/disk")
+				@CommandRunner.addFiles = sinon.stub().callsArg(2)
+				@ResourceWriter._writeResourcesToDisk(@project_id, @resources, @callback)
 
-			it "should write the URL from the cache", ->
-				@UrlCache.getUrlStream
-					.calledWith(@project_id, @resource.url, @resource.modified)
+			it "should get the URL from the cache", ->
+				@UrlCache.getPathOnDisk
+					.calledWith(@project_id, @resources[0].url, @resources[0].modified)
 					.should.equal true
 					
 			it "should add the file to the command runner", ->
-				@CommandRunner.addFileFromStream
-					.calledWith(@project_id, @resource.path, @stream)
+				@CommandRunner.addFiles
+					.calledWith(@project_id, [{
+						path: "main.tex"
+						src:  @pathOnDisk
+					}])
 					.should.equal true
 			
 			it "should call the callback", ->
@@ -113,36 +116,21 @@ describe "ResourceWriter", ->
 
 		describe "with a content based resource", ->
 			beforeEach ->
-				@resource =
+				@resources = [
 					path: "main.tex"
 					content: "Hello world"
-				@CommandRunner.addFileFromContent = sinon.stub().callsArg(3)
-				@ResourceWriter._writeResourceToDisk(@project_id, @resource, @callback)
+				]
+				@CommandRunner.addFiles = sinon.stub().callsArg(2)
+				@ResourceWriter._writeResourcesToDisk(@project_id, @resources, @callback)
 
-			it "should write the contents to disk", ->
-				@CommandRunner.addFileFromContent
-					.calledWith(@project_id, @resource.path, @resource.content)
+			it "should add the file to the command runner", ->
+				@CommandRunner.addFiles
+					.calledWith(@project_id, [{
+						path: @resources[0].path
+						content: @resources[0].content
+					}])
 					.should.equal true
 				
 			it "should call the callback", ->
 				@callback.called.should.equal true
-		
-		# describe "with a file path that breaks out of the root folder", ->
-		# 	beforeEach ->
-		# 		@resource =
-		# 			path: "../../main.tex"
-		# 			content: "Hello world"
-		# 		@fs.writeFile = sinon.stub().callsArg(2)
-		# 		@ResourceWriter._writeResourceToDisk(@project_id, @resource, @basePath, @callback)
-		# 
-		# 	it "should not write to disk", ->
-		# 		@fs.writeFile.called.should.equal false
-		# 
-		# 	it "should return an error", ->
-		# 		@callback
-		# 			.calledWith(new Error("resource path is outside root directory"))
-		# 			.should.equal true
-			
-			
 
-			

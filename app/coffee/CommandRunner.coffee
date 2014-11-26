@@ -46,7 +46,16 @@ module.exports = CommandRunner =
 				else
 					callback()
 		
-	addFileFromStream: (project_id, filePath, readStream, callback = (error) ->) ->
+	addFiles: (project_id, files, callback = (error) ->) ->
+		async.eachSeries files,
+			(file, callback) ->
+				if file.content?
+					CommandRunner._addFileFromContent project_id, file.path, file.content, callback
+				else if file.src?
+					CommandRunner._addFileStream project_id, file.path, fs.createReadStream(file.src), callback
+			callback
+		
+	_addFileFromStream: (project_id, filePath, readStream, callback = (error) ->) ->
 		CommandRunner._getNormalizedPath project_id, filePath, (error, path) ->
 			return callback(error) if error?
 			mkdirp Path.dirname(path), (error) ->
@@ -60,7 +69,7 @@ module.exports = CommandRunner =
 				readStream.on "error", callbackOnce
 				readStream.pipe(writeStream)
 			
-	addFileFromContent: (project_id, filePath, content, callback = (error) ->) ->
+	_addFileFromContent: (project_id, filePath, content, callback = (error) ->) ->
 		CommandRunner._getNormalizedPath project_id, filePath, (error, path) ->
 			return callback(error) if error?
 			mkdirp Path.dirname(path), (error) ->
@@ -123,4 +132,4 @@ module.exports = CommandRunner =
 
 			for file in files
 				outputFiles.push file
-			# TODO: Don't return directories!
+

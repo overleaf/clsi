@@ -2,7 +2,11 @@ Path = require "path"
 Settings = require "settings-sharelatex"
 logger = require "logger-sharelatex"
 Metrics = require "./Metrics"
-CommandRunner = require(Settings.clsi?.commandRunner or "./CommandRunner")
+
+if Settings.clsi?.commandRunner?
+	CommandRunner = require Settings.clsi?.commandRunner
+else
+	CommandRunner = require "./CommandRunner"
 
 module.exports = LatexRunner =
 	runLatex: (project_id, options, callback = (error, streams) ->) ->
