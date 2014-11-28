@@ -30,7 +30,16 @@ module.exports = FilesystemManager =
 				else
 					callback()
 		
-	addFileFromStream: (project_id, filePath, readStream, callback = (error) ->) ->
+	addFiles: (project_id, files, callback = (error) ->) ->
+		async.eachSeries files,
+			(file, callback) ->
+				if file.content?
+					FilesystemManager._addFileFromContent project_id, file.path, file.content, callback
+				else if file.src?
+					FilesystemManager._addFileFromStream project_id, file.path, fs.createReadStream(file.src), callback
+			callback
+		
+	_addFileFromStream: (project_id, filePath, readStream, callback = (error) ->) ->
 		FilesystemManager._getNormalizedPath project_id, filePath, (error, path) ->
 			return callback(error) if error?
 			mkdirp Path.dirname(path), (error) ->
@@ -107,4 +116,3 @@ module.exports = FilesystemManager =
 
 			for file in files
 				outputFiles.push file
-			# TODO: Don't return directories!
