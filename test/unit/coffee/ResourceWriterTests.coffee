@@ -15,7 +15,7 @@ describe "ResourceWriter", ->
 			"./Metrics": @Metrics =
 				Timer: class Timer
 					done: sinon.stub()
-			"./CommandRunner": @CommandRunner = {}
+			"./FilesystemManager": @FilesystemManager = {}
 		@project_id = "project-id-123"
 		@callback = sinon.stub()
 
@@ -57,7 +57,7 @@ describe "ResourceWriter", ->
 			}]
 			@resources = "mock-resources"
 			@OutputFileFinder.findOutputFiles = sinon.stub().callsArgWith(2, null, @output_files)
-			@CommandRunner.deleteFileIfNotDirectory = sinon.stub().callsArg(2)
+			@FilesystemManager.deleteFileIfNotDirectory = sinon.stub().callsArg(2)
 			@ResourceWriter._removeExtraneousFiles(@project_id, @resources, @callback)
 
 		it "should find the existing output files", ->
@@ -66,17 +66,17 @@ describe "ResourceWriter", ->
 				.should.equal true
 
 		it "should delete the output files", ->
-			@CommandRunner.deleteFileIfNotDirectory
+			@FilesystemManager.deleteFileIfNotDirectory
 				.calledWith(@project_id, "output.pdf")
 				.should.equal true
 
 		it "should delete the extra files", ->
-			@CommandRunner.deleteFileIfNotDirectory
+			@FilesystemManager.deleteFileIfNotDirectory
 				.calledWith(@project_id, "extra/file.tex")
 				.should.equal true
 
 		it "should not delete the extra aux files", ->
-			@CommandRunner.deleteFileIfNotDirectory
+			@FilesystemManager.deleteFileIfNotDirectory
 				.calledWith(@project_id, "extra.aux")
 				.should.equal false
 
@@ -95,7 +95,7 @@ describe "ResourceWriter", ->
 					modified: Date.now()
 				]
 				@UrlCache.getPathOnDisk = sinon.stub().callsArgWith(3, null, @pathOnDisk = "/path/on/disk")
-				@CommandRunner.addFiles = sinon.stub().callsArg(2)
+				@FilesystemManager.addFiles = sinon.stub().callsArg(2)
 				@ResourceWriter._writeResourcesToDisk(@project_id, @resources, @callback)
 
 			it "should get the URL from the cache", ->
@@ -104,7 +104,7 @@ describe "ResourceWriter", ->
 					.should.equal true
 					
 			it "should add the file to the command runner", ->
-				@CommandRunner.addFiles
+				@FilesystemManager.addFiles
 					.calledWith(@project_id, [{
 						path: "main.tex"
 						src:  @pathOnDisk
@@ -120,11 +120,11 @@ describe "ResourceWriter", ->
 					path: "main.tex"
 					content: "Hello world"
 				]
-				@CommandRunner.addFiles = sinon.stub().callsArg(2)
+				@FilesystemManager.addFiles = sinon.stub().callsArg(2)
 				@ResourceWriter._writeResourcesToDisk(@project_id, @resources, @callback)
 
 			it "should add the file to the command runner", ->
-				@CommandRunner.addFiles
+				@FilesystemManager.addFiles
 					.calledWith(@project_id, [{
 						path: @resources[0].path
 						content: @resources[0].content

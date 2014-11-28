@@ -5,8 +5,8 @@ async = require "async"
 mkdirp = require "mkdirp"
 OutputFileFinder = require "./OutputFileFinder"
 Metrics = require "./Metrics"
-CommandRunner = require "./CommandRunner"
 logger = require "logger-sharelatex"
+FilesystemManager = require "./FilesystemManager"
 
 module.exports = ResourceWriter =
 	syncResourcesToDisk: (project_id, resources, callback = (error) ->) ->
@@ -34,7 +34,7 @@ module.exports = ResourceWriter =
 						should_delete = true
 					if should_delete
 						jobs.push (callback) ->
-							CommandRunner.deleteFileIfNotDirectory project_id, path, callback
+							FilesystemManager.deleteFileIfNotDirectory project_id, path, callback
 
 			async.series jobs, callback
 
@@ -55,5 +55,6 @@ module.exports = ResourceWriter =
 					}
 			(error, files) ->
 				return callback(error) if error?
-				CommandRunner.addFiles project_id, files, callback
+				FilesystemManager.addFiles project_id, files, callback
+
 

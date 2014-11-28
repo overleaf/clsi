@@ -2,7 +2,7 @@ UrlCache = require "./UrlCache"
 db = require "./db"
 async = require "async"
 logger = require "logger-sharelatex"
-CommandRunner = require "./CommandRunner"
+FilesystemManager = require "./FilesystemManager"
 
 module.exports = ProjectPersistenceManager =
 	EXPIRY_TIMEOUT: oneDay = 24 * 60 * 60 * 1000 #ms
@@ -32,7 +32,7 @@ module.exports = ProjectPersistenceManager =
 
 	clearProject: (project_id, callback = (error) ->) ->
 		logger.log project_id: project_id, "clearing project"
-		CommandRunner.clearProject project_id, (error) ->
+		FilesystemManager.clearProject project_id, (error) ->
 			return callback(error) if error?
 			UrlCache.clearProject project_id, (error) ->
 				return callback(error) if error?

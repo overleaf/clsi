@@ -1,12 +1,12 @@
 SandboxedModule = require('sandboxed-module')
 sinon = require('sinon')
 require('chai').should()
-modulePath = require('path').join __dirname, '../../../app/js/CommandRunner'
+modulePath = require('path').join __dirname, '../../../app/js/FilesystemManager'
 EventEmitter = require("events").EventEmitter
 
-describe "CommandRunner", ->
+describe "FilesystemManager", ->
 	beforeEach ->
-		@CommandRunner = SandboxedModule.require modulePath, requires:
+		@FilesystemManager = SandboxedModule.require modulePath, requires:
 			"settings-sharelatex": @Settings = { path: compilesDir: "/compiles/dir" }
 			"logger-sharelatex": @logger = { log: sinon.stub() }
 			"child_process": @child_process = {}
@@ -21,7 +21,7 @@ describe "CommandRunner", ->
 				@proc.stdout = new EventEmitter()
 				@proc.stderr = new EventEmitter()
 				@child_process.spawn = sinon.stub().returns(@proc)
-				@CommandRunner.clearProject @project_id, @callback
+				@FilesystemManager.clearProject @project_id, @callback
 				@proc.emit "close", 0
 
 			it "should remove the project directory", ->
@@ -39,7 +39,7 @@ describe "CommandRunner", ->
 				@proc.stdout = new EventEmitter()
 				@proc.stderr = new EventEmitter()
 				@child_process.spawn = sinon.stub().returns(@proc)
-				@CommandRunner.clearProject @project_id, @callback
+				@FilesystemManager.clearProject @project_id, @callback
 				@proc.stderr.emit "data", @error = "oops"
 				@proc.emit "close", 1
 

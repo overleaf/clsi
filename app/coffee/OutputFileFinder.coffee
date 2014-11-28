@@ -1,4 +1,4 @@
-CommandRunner = require "./CommandRunner"
+FilesystemManager = require "./FilesystemManager"
 
 module.exports = OutputFileFinder =
 	findOutputFiles: (project_id, resources, callback = (error, outputFiles) ->) ->
@@ -6,7 +6,7 @@ module.exports = OutputFileFinder =
 		for resource in resources
 			inputFiles[resource.path] = true
 
-		CommandRunner.getAllFiles project_id, (error, allFiles) ->
+		FilesystemManager.getAllFiles project_id, (error, allFiles) ->
 			jobs = []
 			outputFiles = allFiles.filter (file) -> !inputFiles[file]
 			callback null, outputFiles.map (file) ->

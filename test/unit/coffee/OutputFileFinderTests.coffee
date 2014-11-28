@@ -8,7 +8,7 @@ expect = require("chai").expect
 describe "OutputFileFinder", ->
 	beforeEach ->
 		@OutputFileFinder = SandboxedModule.require modulePath, requires:
-			"./CommandRunner": @CommandRunner = {}
+			"./FilesystemManager": @FilesystemManager = {}
 		@project_id = "mock-project-id-123"
 		@callback = sinon.stub()
 
@@ -18,11 +18,11 @@ describe "OutputFileFinder", ->
 			@resources = [
 				path: @resource_path = "resource/path.tex"
 			]
-			@CommandRunner.getAllFiles = sinon.stub().callsArgWith(1, null, @output_paths.concat([@resource_path]))
+			@FilesystemManager.getAllFiles = sinon.stub().callsArgWith(1, null, @output_paths.concat([@resource_path]))
 			@OutputFileFinder.findOutputFiles @project_id, @resources, (error, @outputFiles) =>
 				
-		it "should get all the files from the CommandRunner", ->
-			@CommandRunner.getAllFiles
+		it "should get all the files from the FilesystemManager", ->
+			@FilesystemManager.getAllFiles
 				.calledWith(@project_id)
 				.should.equal true
 

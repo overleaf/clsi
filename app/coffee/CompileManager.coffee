@@ -1,7 +1,7 @@
 ResourceWriter = require "./ResourceWriter"
 LatexRunner = require "./LatexRunner"
 OutputFileFinder = require "./OutputFileFinder"
-CommandRunner = require "./CommandRunner"
+FilesystemManager = require "./FilesystemManager"
 Settings = require("settings-sharelatex")
 Path = require "path"
 logger = require "logger-sharelatex"
@@ -12,7 +12,7 @@ module.exports = CompileManager =
 	doCompile: (request, callback = (error, outputFiles, output) ->) ->
 		timer = new Metrics.Timer("write-to-disk")
 		logger.log project_id: request.project_id, "starting compile"
-		CommandRunner.initProject request.project_id, (error) ->
+		FilesystemManager.initProject request.project_id, (error) ->
 			return callback(error) if error?
 			ResourceWriter.syncResourcesToDisk request.project_id, request.resources, (error) ->
 				return callback(error) if error?

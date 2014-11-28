@@ -8,7 +8,7 @@ describe "ProjectPersistenceManager", ->
 	beforeEach ->
 		@ProjectPersistenceManager = SandboxedModule.require modulePath, requires:
 			"./UrlCache": @UrlCache = {}
-			"./CommandRunner": @CommandRunner = {}
+			"./FilesystemManager": @FilesystemManager = {}
 			"logger-sharelatex": @logger = { log: sinon.stub() }
 			"./db": @db = {}
 		@callback = sinon.stub()
@@ -37,7 +37,7 @@ describe "ProjectPersistenceManager", ->
 		beforeEach ->
 			@ProjectPersistenceManager._clearProjectFromDatabase = sinon.stub().callsArg(1)
 			@UrlCache.clearProject = sinon.stub().callsArg(1)
-			@CommandRunner.clearProject = sinon.stub().callsArg(1)
+			@FilesystemManager.clearProject = sinon.stub().callsArg(1)
 			@ProjectPersistenceManager.clearProject @project_id, @callback
 
 		it "should clear the project from the database", ->
@@ -51,7 +51,7 @@ describe "ProjectPersistenceManager", ->
 				.should.equal true
 
 		it "should clear the project compile folder", ->
-			@CommandRunner.clearProject
+			@FilesystemManager.clearProject
 				.calledWith(@project_id)
 				.should.equal true
 
