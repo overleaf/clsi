@@ -53,7 +53,7 @@ module.exports = FilesystemManager =
 				readStream.on "error", callbackOnce
 				readStream.pipe(writeStream)
 			
-	addFileFromContent: (project_id, filePath, content, callback = (error) ->) ->
+	_addFileFromContent: (project_id, filePath, content, callback = (error) ->) ->
 		FilesystemManager._getNormalizedPath project_id, filePath, (error, path) ->
 			return callback(error) if error?
 			mkdirp Path.dirname(path), (error) ->
