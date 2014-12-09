@@ -97,8 +97,11 @@ module.exports = FilesystemManager =
 			if code != 0
 				logger.warn {directory, code}, "find returned error, directory likely doesn't exist"
 				return callback null, []
-			fileList = stdout.trim().split("\n")
+			fileList = stdout.split("\n").filter (file) -> file != ""
 			fileList = fileList.map (file) ->
 				# Strip leading directory
-				path = Path.relative(directory, file)
+				if file.slice(0, directory.length) == directory
+					return Path.relative(directory, file)
+				else
+					return file
 			return callback null, fileList

@@ -77,6 +77,16 @@ describe "FilesystemManager", ->
 					["main.tex", "chapters/chapter1.tex"]
 				).should.equal true
 
+		describe "with no results", ->
+			beforeEach ->
+				@proc.emit "close", 0
+				
+			it "should call the callback with a blank array", ->
+				@callback.calledWith(
+					null,
+					[]
+				).should.equal true
+
 		describe "when the directory doesn't exist", ->
 			beforeEach ->
 				@proc.emit "close", 1
