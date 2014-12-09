@@ -8,7 +8,7 @@ describe "FilesystemManager", ->
 	beforeEach ->
 		@FilesystemManager = SandboxedModule.require modulePath, requires:
 			"settings-sharelatex": @Settings = { path: compilesDir: "/compiles/dir" }
-			"logger-sharelatex": @logger = { log: sinon.stub() }
+			"logger-sharelatex": @logger = { log: sinon.stub(), warn: sinon.stub() }
 			"child_process": @child_process = {}
 		@project_id = "mock-project-id-123"
 		@callback = sinon.stub()
@@ -54,3 +54,35 @@ describe "FilesystemManager", ->
 					.should.equal true
 
 				@callback.args[0][0].message.should.equal "rm -r #{@Settings.path.compilesDir}/#{@project_id} failed: #{@error}"
+
+	describe "getAllFiles", ->
+		beforeEach ->
+			@proc = new EventEmitter()
+			@proc.stdout = new EventEmitter()
+			@child_process.spawn = sinon.stub().returns @proc
+			@directory = @Settings.path.compilesDir + "/" + @project_id
+			@FilesystemManager.getAllFiles @project_id, @callback
+			
+		describe "successfully", ->
+			beforeEach ->
+				@proc.stdout.emit(
+					"data",
+					["#{@directory}/main.tex", "#{@directory}/chapters/chapter1.tex"].join("\n") + "\n"
+				)
+				@proc.emit "close", 0
+				
+			it "should call the callback with the relative file paths", ->
+				@callback.calledWith(
+					null,
+					["main.tex", "chapters/chapter1.tex"]
+				).should.equal true
+
+		describe "when the directory doesn't exist", ->
+			beforeEach ->
+				@proc.emit "close", 1
+				
+			it "should call the callback with a blank array", ->
+				@callback.calledWith(
+					null,
+					[]
+				).should.equal true

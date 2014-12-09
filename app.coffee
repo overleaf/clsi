@@ -43,7 +43,7 @@ staticServer = express.static Settings.path.compilesDir, setHeaders: (res, path,
 		# that could be used in same-origin/XSS attacks.
 		res.set("Content-Type", "text/plain")
 		
-app.get "/project/:project_id/output/*", (req, res, next) ->
+app.get "/project/:project_id/output/*", require("./app/js/SymlinkCheckerMiddlewear"), (req, res, next) ->
 	req.url = "/#{req.params.project_id}/#{req.params[0]}"
 	staticServer(req, res, next)
 

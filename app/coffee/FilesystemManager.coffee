@@ -79,40 +79,26 @@ module.exports = FilesystemManager =
 			else
 				return callback(new Error("rm -r #{directory} failed: #{stderr}"))
 
-	getAllFiles: (project_id, callback = (error, files) ->) ->
-		directory = Path.join(settings.path.compilesDir, project_id)
-		
-		FilesystemManager._getAllEntities directory, (error, allEntities) ->
-			return callback(error) if error?
-			
-			isFile = (file, callback = (isDirectory) ->) ->
-				fs.stat Path.join(directory, file), (error, stat) ->
-					return callback(false) if error?
-					if stat.isFile()
-						callback(true)
-					else
-						callback(false)
-			
-			async.filterSeries allEntities, isFile, (files) ->
-				callback null, files
-
-	_getAllEntities: (directory, _callback = (error, outputFiles) ->) ->
-		callback = (error, outputFiles) ->
-			_callback(error, outputFiles)
+	getAllFiles: (project_id, _callback = (error, files) ->) ->
+		callback = (error, fileList) ->
+			_callback(error, fileList)
 			_callback = () ->
+				
+		directory = Path.join(settings.path.compilesDir, project_id)
+		args = [directory, "-type", "f"]
+		logger.log args: args, "running find command"
 
-		outputFiles = []
-		wrench.readdirRecursive directory, (error, files) =>
-			if error?
-				if error.code == "ENOENT"
-					# Directory doesn't exist, which is not a problem
-					return callback(null, [])
-				else
-					return callback(error)
-
-			# readdirRecursive returns multiple times and finishes with a null response
-			if !files?
-				return callback(null, outputFiles)
-
-			for file in files
-				outputFiles.push file
+		proc = child_process.spawn("find", args)
+		stdout = ""
+		proc.stdout.on "data", (chunk) ->
+			stdout += chunk.toString()	
+		proc.on "error", callback	
+		proc.on "close", (code) ->
+			if code != 0
+				logger.warn {directory, code}, "find returned error, directory likely doesn't exist"
+				return callback null, []
+			fileList = stdout.trim().split("\n")
+			fileList = fileList.map (file) ->
+				# Strip leading directory
+				path = Path.relative(directory, file)
+			return callback null, fileList
