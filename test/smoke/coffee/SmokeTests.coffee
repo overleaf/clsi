@@ -12,24 +12,16 @@ describe "Running a compile", ->
 			url: buildUrl("project/smoketest/compile")
 			json:
 				compile:
+					options:
+						compiler: "python"
 					resources: [
-						path: "main.tex"
+						path: "main.py"
 						content: """
-							\\documentclass{article}
-							\\begin{document}
-							Hello world
-							\\end{document}
+							print 'hello world'
 						"""
 					]
 		}, (@error, @response, @body) =>
 			done()
 
-	it "should return the pdf", ->
-		for file in @body.compile.outputFiles
-			return if file.type == "pdf"
-		throw new Error("no pdf returned")
-	
-	it "should return the log", ->
-		for file in @body.compile.outputFiles
-			return if file.type == "log"
-		throw new Error("no log returned")
+	it "should return the output", ->
+		@body.compile.output.stdout.should.equal "hello world\n"
