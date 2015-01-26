@@ -14,6 +14,7 @@ describe "Running a compile", ->
 				compile:
 					options:
 						compiler: "python"
+					rootResourcePath: "main.py"
 					resources: [
 						path: "main.py"
 						content: """
