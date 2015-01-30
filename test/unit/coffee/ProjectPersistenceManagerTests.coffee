@@ -11,6 +11,8 @@ describe "ProjectPersistenceManager", ->
 			"./FilesystemManager": @FilesystemManager = {}
 			"logger-sharelatex": @logger = { log: sinon.stub() }
 			"./db": @db = {}
+			"./CommandRunner": @CommandRunner = {}
+			"settings-sharelatex": @Settings = {}
 		@callback = sinon.stub()
 		@project_id = "project-id-123"
 
@@ -38,7 +40,13 @@ describe "ProjectPersistenceManager", ->
 			@ProjectPersistenceManager._clearProjectFromDatabase = sinon.stub().callsArg(1)
 			@UrlCache.clearProject = sinon.stub().callsArg(1)
 			@FilesystemManager.clearProject = sinon.stub().callsArg(1)
+			@CommandRunner.clearProject = sinon.stub().callsArg(1)
 			@ProjectPersistenceManager.clearProject @project_id, @callback
+			
+		it "should clear the project from the command runner", ->
+			@CommandRunner.clearProject
+				.calledWith(@project_id)
+				.should.equal true
 
 		it "should clear the project from the database", ->
 			@ProjectPersistenceManager._clearProjectFromDatabase

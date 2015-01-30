@@ -78,4 +78,5 @@ app.listen port = (Settings.internal?.clsi?.port or 3013), host = (Settings.inte
 
 setInterval () ->
 	ProjectPersistenceManager.clearExpiredProjects()
-, tenMinutes = 10 * 60 * 1000
+, Settings.clsi?.checkProjectsIntervalMs or 10 * 60 * 1000 # 10 mins
+

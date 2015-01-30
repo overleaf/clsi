@@ -3,9 +3,11 @@ db = require "./db"
 async = require "async"
 logger = require "logger-sharelatex"
 FilesystemManager = require "./FilesystemManager"
+CommandRunner = require "./CommandRunner"
+Settings = require "settings-sharelatex"
 
 module.exports = ProjectPersistenceManager =
-	EXPIRY_TIMEOUT: oneDay = 24 * 60 * 60 * 1000 #ms
+	EXPIRY_TIMEOUT: Settings.clsi?.expireProjectAfterIdleMs or 6 * 60 * 60 * 1000 # 6 hours
 
 	markProjectAsJustAccessed: (project_id, callback = (error) ->) ->
 		db.Project.findOrCreate(project_id: project_id)
@@ -32,13 +34,15 @@ module.exports = ProjectPersistenceManager =
 
 	clearProject: (project_id, callback = (error) ->) ->
 		logger.log project_id: project_id, "clearing project"
-		FilesystemManager.clearProject project_id, (error) ->
+		CommandRunner.clearProject project_id, (error) ->
 			return callback(error) if error?
-			UrlCache.clearProject project_id, (error) ->
+			FilesystemManager.clearProject project_id, (error) ->
 				return callback(error) if error?
-				ProjectPersistenceManager._clearProjectFromDatabase project_id, (error) ->
+				UrlCache.clearProject project_id, (error) ->
 					return callback(error) if error?
-					callback()
+					ProjectPersistenceManager._clearProjectFromDatabase project_id, (error) ->
+						return callback(error) if error?
+						callback()
 
 	_clearProjectFromDatabase: (project_id, callback = (error) ->) ->
 		db.Project.destroy(project_id: project_id)

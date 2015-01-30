@@ -11,12 +11,13 @@ child_process = require "child_process"
 module.exports = CompileManager =
 	doCompile: (request, callback = (error, outputFiles, output) ->) ->
 		timer = new Metrics.Timer("write-to-disk")
-		logger.log project_id: request.project_id, "starting compile"
-		FilesystemManager.initProject request.project_id, (error) ->
+		project_id = request.project_id
+		logger.log {project_id}, "starting compile"
+		FilesystemManager.initProject project_id, (error) ->
 			return callback(error) if error?
-			ResourceWriter.syncResourcesToDisk request.project_id, request.resources, (error) ->
+			ResourceWriter.syncResourcesToDisk project_id, request.resources, (error) ->
 				return callback(error) if error?
-				logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "written files to disk"
+				logger.log project_id: project_id, time_taken: Date.now() - timer.start, "written files to disk"
 				timer.done()
 
 				timer = new Metrics.Timer("run-compile")
@@ -30,11 +31,12 @@ module.exports = CompileManager =
 					cpu_shares: request.cpu_shares
 				}, (error, output = {}) ->
 					return callback(error) if error?
-					logger.log project_id: request.project_id, time_taken: Date.now() - timer.start, "done compile"
+					logger.log project_id: project_id, time_taken: Date.now() - timer.start, "done compile"
 					timer.done()
 
-					OutputFileFinder.findOutputFiles request.project_id, request.resources, (error, outputFiles) ->
+					OutputFileFinder.findOutputFiles project_id, request.resources, (error, outputFiles) ->
 						return callback(error) if error?
+						logger.log {outputFiles, project_id, output}, "got output files"
 						callback null, outputFiles, output
 
 	syncFromCode: (project_id, file_name, line, column, callback = (error, pdfPositions) ->) ->
