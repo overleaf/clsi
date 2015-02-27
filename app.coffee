@@ -36,15 +36,20 @@ app.delete "/project/:project_id", CompileController.clearCache
 app.get  "/project/:project_id/sync/code", CompileController.syncFromCode
 app.get  "/project/:project_id/sync/pdf", CompileController.syncFromPdf
 
-staticServer = express.static Settings.path.compilesDir, setHeaders: (res, path, stat) ->
+ForbidSymlinks = require "./app/js/StaticServerForbidSymlinks"
+
+# create a static server which does not allow access to any symlinks
+# avoids possible mismatch of root directory between middleware check
+# and serving the files
+staticServer = ForbidSymlinks express.static, Settings.path.compilesDir, setHeaders: (res, path, stat) ->
 	if Path.basename(path).match(/\.pdf$/)
 		res.set("Content-Type", "application/pdf")
 	else
 		# Force plain treatment of other file types to prevent hosting of HTTP/JS files
 		# that could be used in same-origin/XSS attacks.
 		res.set("Content-Type", "text/plain")
-		
-app.get "/project/:project_id/output/*", require("./app/js/SymlinkCheckerMiddlewear"), (req, res, next) ->
+
+app.get "/project/:project_id/output/*", (req, res, next) ->
 	req.url = "/#{req.params.project_id}/#{req.params[0]}"
 	staticServer(req, res, next)
 
