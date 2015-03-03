@@ -5,7 +5,6 @@ async = require "async"
 mkdirp = require "mkdirp"
 OutputFileFinder = require "./OutputFileFinder"
 Metrics = require "./Metrics"
-logger = require "logger-sharelatex"
 FilesystemManager = require "./FilesystemManager"
 
 module.exports = ResourceWriter =

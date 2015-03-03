@@ -9,6 +9,7 @@ describe "OutputFileFinder", ->
 	beforeEach ->
 		@OutputFileFinder = SandboxedModule.require modulePath, requires:
 			"./FilesystemManager": @FilesystemManager = {}
+			"logger-sharelatex": @logger = {log: sinon.stub()}
 		@project_id = "mock-project-id-123"
 		@callback = sinon.stub()
 

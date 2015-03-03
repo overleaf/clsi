@@ -2,6 +2,7 @@ ResourceWriter = require "./ResourceWriter"
 LatexRunner = require "./LatexRunner"
 OutputFileFinder = require "./OutputFileFinder"
 FilesystemManager = require "./FilesystemManager"
+RealTimeApiManager = require "./RealTimeApiManager"
 Settings = require("settings-sharelatex")
 Path = require "path"
 logger = require "logger-sharelatex"
@@ -9,7 +10,11 @@ Metrics = require "./Metrics"
 child_process = require "child_process"
 
 module.exports = CompileManager =
-	doCompile: (request, callback = (error, outputFiles, output) ->) ->
+	doCompile: (request, _callback = (error, outputFiles, output) ->) ->
+		callback = (args...) ->
+			_callback(args...)
+			_callback = () ->
+		
 		timer = new Metrics.Timer("write-to-disk")
 		project_id = request.project_id
 		logger.log {project_id}, "starting compile"
@@ -29,15 +34,24 @@ module.exports = CompileManager =
 					processes: request.processes
 					memory:    request.memory
 					cpu_shares: request.cpu_shares
-				}, (error, output = {}) ->
+				}, (error, stream) ->
 					return callback(error) if error?
-					logger.log project_id: project_id, time_taken: Date.now() - timer.start, "done compile"
-					timer.done()
-
-					OutputFileFinder.findOutputFiles project_id, request.resources, (error, outputFiles) ->
-						return callback(error) if error?
-						logger.log {outputFiles, project_id, output}, "got output files"
-						callback null, outputFiles, output
+					
+					stream.on "data", (message) ->
+						logger.log {message, project_id}, "got output message"
+						RealTimeApiManager.sendMessage project_id, message, (err) ->
+							if err?
+								logger.err {err, project_id, message}, "error sending message to real-time API"
+								
+					stream.on "error", callback
+								
+					stream.on "end", () ->
+						logger.log project_id: project_id, time_taken: Date.now() - timer.start, "done compile"
+						timer.done()
+						OutputFileFinder.findOutputFiles project_id, request.resources, (error, outputFiles) ->
+							return callback(error) if error?
+							logger.log {outputFiles, project_id}, "got output files"
+							callback null, outputFiles
 
 	syncFromCode: (project_id, file_name, line, column, callback = (error, pdfPositions) ->) ->
 		# If LaTeX was run in a virtual environment, the file path that synctex expects

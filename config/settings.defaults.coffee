@@ -35,5 +35,9 @@ module.exports =
 	apis:
 		clsi:
 			url: "http://localhost:3013"
+		realtime:
+			url: "http://localhost:3026"
+			user: "sharelatex"
+			pass: "password"
 			
 	smokeTest: false

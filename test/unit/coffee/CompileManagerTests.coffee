@@ -13,9 +13,15 @@ describe "CompileManager", ->
 			"./ResourceWriter": @ResourceWriter = {}
 			"./OutputFileFinder": @OutputFileFinder = {}
 			"./FilesystemManager": @FilesystemManager = {}
+			"./RealTimeApiManager": @RealTimeApiManager = {}
 			"settings-sharelatex": @Settings = { path: compilesDir: "/compiles/dir" }
 			"logger-sharelatex": @logger = { log: sinon.stub() }
 			"child_process": @child_process = {}
+			"./Metrics": {
+				Timer: class Timer
+					done: sinon.stub()
+				inc: sinon.stub()
+			}
 		@callback = sinon.stub()
 
 	describe "doCompile", ->
@@ -27,10 +33,7 @@ describe "CompileManager", ->
 				path: "output.pdf"
 				type: "pdf"
 			}]
-			@output = {
-				stdout: "stdout",
-				stderr: "stderr"
-			}
+			@stream = new EventEmitter()
 			@request =
 				resources: @resources = "mock-resources"
 				rootResourcePath: @rootResourcePath = "main.tex"
@@ -44,9 +47,12 @@ describe "CompileManager", ->
 			@compileDir = "#{@Settings.path.compilesDir}/#{@project_id}"
 			@FilesystemManager.initProject = sinon.stub().callsArg(1)
 			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(2)
-			@LatexRunner.runLatex = sinon.stub().callsArgWith(2, null, @output)
+			@LatexRunner.runLatex = sinon.stub().callsArgWith(2, null, @stream)
+			@RealTimeApiManager.sendMessage = sinon.stub().callsArg(2)
 			@OutputFileFinder.findOutputFiles = sinon.stub().callsArgWith(2, null, @output_files)
 			@CompileManager.doCompile @request, @callback
+			@stream.emit "data", @message = { "mock": "message" }
+			@stream.emit "end"
 			
 		it "should init the project", ->
 			@FilesystemManager.initProject
@@ -74,9 +80,14 @@ describe "CompileManager", ->
 			@OutputFileFinder.findOutputFiles
 				.calledWith(@project_id, @resources)
 				.should.equal true
+				
+		it "should send emitted messages to the real time api", ->
+			@RealTimeApiManager.sendMessage
+				.calledWith(@project_id, @message)
+				.should.equal true
 
-		it "should return the output files and output", ->
-			@callback.calledWith(null, @output_files, @output).should.equal true
+		it "should return the output files", ->
+			@callback.calledWith(null, @output_files).should.equal true
 
 	describe "syncing", ->
 		beforeEach ->
