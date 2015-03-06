@@ -15,6 +15,10 @@ module.exports = RequestParser =
 		compile.options ||= {}
 		
 		try
+			response.session_id = @_parseAttribute "session_id",
+				compile.session_id,
+				type: "string"
+
 			response.compiler = @_parseAttribute "compiler",
 				compile.options.compiler,
 				validValues: @VALID_COMPILERS
