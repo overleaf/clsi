@@ -67,5 +67,13 @@ module.exports = LatexRunner =
 		
 	_pythonCommand: (mainFile) -> ["python", mainFile]
 
-	_rCommand: (mainFile) -> ["R", "--no-save", "--quiet", "-f", mainFile]
+	_rCommand: (mainFile) -> [
+		"Rscript", "-e", """
+			if (!file.exists(".output")) { dir.create(".output") }
+			png2 <- function(filename = ".output/Rplot%03d.png", ...) { png(filename=".output/Rplot%03d.png", ...) }
+			options(device=png)
+			options(error=function() { traceback(2) })
+			source("#{mainFile}", keep.source=TRUE, print.eval=TRUE)
+		""".replace(/\n/g, "; ")
+	]
 
