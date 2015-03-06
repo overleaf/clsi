@@ -7,7 +7,7 @@ describe "RealTimeApiManager", ->
 	beforeEach ->
 		@RealTimeApiManager = SandboxedModule.require modulePath, requires:
 			"request": @request = sinon.stub()
-			"logger-sharelatex": @logger = {err: sinon.stub()}
+			"logger-sharelatex": @logger = {log: sinon.stub(), err: sinon.stub()}
 			"settings-sharelatex": @settings = 
 				apis:
 					realtime:
