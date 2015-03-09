@@ -70,8 +70,8 @@ module.exports = LatexRunner =
 	_rCommand: (mainFile) -> [
 		"Rscript", "-e", """
 			if (!file.exists(".output")) { dir.create(".output") }
-			png2 <- function(filename = ".output/Rplot%03d.png", ...) { png(filename=".output/Rplot%03d.png", ...) }
-			options(device=png)
+			png2 <- function(filename = ".output/Rplot%03d.png", ...) { png(filename=filename, ...) }
+			options(device=png2)
 			options(error=function() { traceback(2) })
 			source("#{mainFile}", keep.source=TRUE, print.eval=TRUE)
 		""".replace(/\n/g, "; ")
