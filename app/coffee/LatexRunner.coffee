@@ -65,15 +65,7 @@ module.exports = LatexRunner =
 			Path.join("$COMPILE_DIR", mainFile)
 		]
 		
-	_pythonCommand: (mainFile) -> ["python", mainFile]
+	_pythonCommand: (mainFile) -> ["python", ".datajoy/run.py", mainFile]
 
-	_rCommand: (mainFile) -> [
-		"Rscript", "-e", """
-			if (!file.exists(".output")) { dir.create(".output") }
-			png2 <- function(filename = ".output/Rplot%03d.png", ...) { png(filename=filename, ...) }
-			options(device=png2)
-			options(error=function() { traceback(2) })
-			source("#{mainFile}", keep.source=TRUE, print.eval=TRUE)
-		""".replace(/\n/g, "; ")
-	]
+	_rCommand: (mainFile) -> ["Rscript", ".datajoy/run.R", mainFile]
 
