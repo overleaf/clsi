@@ -37,9 +37,12 @@ module.exports = CompileManager =
 				}, (error, stream) ->
 					return callback(error) if error?
 					
+					msg_id = 0
 					stream.on "data", (message) ->
 						message.header ||= {}
 						message.header.session = request.session_id
+						message.header.msg_id = msg_id.toString()
+						msg_id++
 						logger.log {message, project_id}, "got output message"
 						RealTimeApiManager.sendMessage project_id, message, (err) ->
 							if err?
