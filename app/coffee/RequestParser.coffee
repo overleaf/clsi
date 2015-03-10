@@ -17,6 +17,7 @@ module.exports = RequestParser =
 		try
 			response.session_id = @_parseAttribute "session_id",
 				compile.session_id,
+				default: ""
 				type: "string"
 
 			response.compiler = @_parseAttribute "compiler",

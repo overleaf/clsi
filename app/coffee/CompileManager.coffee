@@ -37,6 +37,10 @@ module.exports = CompileManager =
 				}, (error, stream) ->
 					return callback(error) if error?
 					
+					output =
+						stdout: ""
+						stderr: ""
+					
 					msg_id = 0
 					stream.on "data", (message) ->
 						message.header ||= {}
@@ -47,6 +51,8 @@ module.exports = CompileManager =
 						RealTimeApiManager.sendMessage project_id, message, (err) ->
 							if err?
 								logger.err {err, project_id, message}, "error sending message to real-time API"
+						if message.msg_type == "stream"
+							output[message.content.name] += message.content.text
 								
 					stream.on "error", callback
 								
@@ -56,7 +62,7 @@ module.exports = CompileManager =
 						OutputFileFinder.findOutputFiles project_id, request.resources, (error, outputFiles) ->
 							return callback(error) if error?
 							logger.log {outputFiles, project_id}, "got output files"
-							callback null, outputFiles
+							callback null, outputFiles, output
 
 	syncFromCode: (project_id, file_name, line, column, callback = (error, pdfPositions) ->) ->
 		# If LaTeX was run in a virtual environment, the file path that synctex expects

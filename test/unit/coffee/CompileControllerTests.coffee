@@ -44,13 +44,14 @@ describe "CompileController", ->
 				path: "output.log"
 				type: "log"
 			}]
+			@output = {"mock":"output"}
 			@RequestParser.parse = sinon.stub().callsArgWith(1, null, @request)
 			@ProjectPersistenceManager.markProjectAsJustAccessed = sinon.stub().callsArg(1)
 			@res.send = sinon.stub()
 
 		describe "successfully", ->
 			beforeEach ->
-				@CompileManager.doCompile = sinon.stub().callsArgWith(1, null, @output_files)
+				@CompileManager.doCompile = sinon.stub().callsArgWith(1, null, @output_files, @output)
 				@CompileController.compile @req, @res
 
 			it "should parse the request", ->
@@ -77,6 +78,7 @@ describe "CompileController", ->
 							outputFiles: @output_files.map (file) =>
 								url: "#{@Settings.apis.clsi.url}/project/#{@project_id}/output/#{file.path}"
 								type: file.type
+							output: @output
 					)
 					.should.equal true
 			
@@ -92,6 +94,7 @@ describe "CompileController", ->
 							status: "error"
 							error:  @message
 							outputFiles: []
+							output: {}
 					)
 					.should.equal true
 
@@ -109,6 +112,7 @@ describe "CompileController", ->
 							status: "timedout"
 							error: @message
 							outputFiles: []
+							output: {}
 					)
 					.should.equal true
 
@@ -124,6 +128,7 @@ describe "CompileController", ->
 							error: null
 							status: "failure"
 							outputFiles: []
+							output: {}
 					)
 					.should.equal true
 
