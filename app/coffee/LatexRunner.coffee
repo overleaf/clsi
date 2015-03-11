@@ -65,7 +65,7 @@ module.exports = LatexRunner =
 			Path.join("$COMPILE_DIR", mainFile)
 		]
 		
-	_pythonCommand: (mainFile) -> ["python", ".datajoy/run.py", mainFile]
+	_pythonCommand: (mainFile) -> ["python", "-u", ".datajoy/run.py", mainFile]
 
 	_rCommand: (mainFile) -> ["Rscript", ".datajoy/run.R", mainFile]
 
