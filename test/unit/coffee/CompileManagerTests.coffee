@@ -48,7 +48,7 @@ describe "CompileManager", ->
 			@FilesystemManager.initProject = sinon.stub().callsArg(1)
 			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(2)
 			@LatexRunner.runLatex = sinon.stub().callsArgWith(2, null, @stream)
-			@RealTimeApiManager.sendMessage = sinon.stub().callsArg(2)
+			@RealTimeApiManager.bufferMessageForSending = sinon.stub()
 			@OutputFileFinder.findOutputFiles = sinon.stub().callsArgWith(2, null, @output_files)
 			@CompileManager.doCompile @request, @callback
 			@stream.emit "data", @message = { "mock": "message" }
@@ -82,7 +82,7 @@ describe "CompileManager", ->
 				.should.equal true
 				
 		it "should send emitted messages to the real time api", ->
-			@RealTimeApiManager.sendMessage
+			@RealTimeApiManager.bufferMessageForSending
 				.calledWith(@project_id, @message)
 				.should.equal true
 

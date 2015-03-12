@@ -48,11 +48,9 @@ module.exports = CompileManager =
 						message.header.msg_id = msg_id.toString()
 						msg_id++
 						logger.log {message, project_id}, "got output message"
-						RealTimeApiManager.sendMessage project_id, message, (err) ->
-							if err?
-								logger.err {err, project_id, message}, "error sending message to real-time API"
 						if message.msg_type == "stream"
 							output[message.content.name] += message.content.text
+						RealTimeApiManager.bufferMessageForSending project_id, message
 								
 					stream.on "error", callback
 								
