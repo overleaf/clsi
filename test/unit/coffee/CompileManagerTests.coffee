@@ -1,6 +1,7 @@
 SandboxedModule = require('sandboxed-module')
 sinon = require('sinon')
 require('chai').should()
+expect = require("chai").expect
 modulePath = require('path').join __dirname, '../../../app/js/CompileManager'
 tk = require("timekeeper")
 EventEmitter = require("events").EventEmitter
@@ -38,6 +39,7 @@ describe "CompileManager", ->
 				resources: @resources = "mock-resources"
 				rootResourcePath: @rootResourcePath = "main.tex"
 				project_id: @project_id = "project-id-123"
+				session_id: @session_id = "session-id-123"
 				compiler: @compiler = "pdflatex"
 				timeout: @timeout = 42000
 				processes: @processes = 42
@@ -52,6 +54,8 @@ describe "CompileManager", ->
 			@OutputFileFinder.findOutputFiles = sinon.stub().callsArgWith(2, null, @output_files)
 			@CompileManager.doCompile @request, @callback
 			@stream.emit "data", @message = { "mock": "message" }
+			
+			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@session_id}"].should.equal @stream
 			@stream.emit "end"
 			
 		it "should init the project", ->
@@ -88,6 +92,36 @@ describe "CompileManager", ->
 
 		it "should return the output files", ->
 			@callback.calledWith(null, @output_files).should.equal true
+			
+		it "should remove the stream from INPROGRESS_STREAMS", ->
+			stream = @CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@session_id}"]
+			expect(stream).to.be.undefined
+	
+	describe "stopCompile", ->
+		beforeEach ->
+			@project_id = "project-id-123"
+			@session_id = "session-id-123"
+		
+		describe "when the session_id exists", ->
+			beforeEach ->
+				@stream =
+					emit: sinon.stub()
+				@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@session_id}"] = @stream
+				@CompileManager.stopCompile @project_id, @session_id, @callback
+			
+			it "should send a kill signal to the stream", ->
+				@stream.emit.calledWith("kill").should.equal true
+				
+			it "should call the callback", ->
+				@callback.called.should.equal true
+			
+		describe "when the session_id does not exist", ->
+			beforeEach ->
+				@CompileManager.stopCompile @project_id, @session_id, @callback
+			
+			it "should call the callback with an error", ->
+				error = @callback.args[0][0]
+				error.statusCode.should.equal 404
 
 	describe "syncing", ->
 		beforeEach ->

@@ -30,6 +30,7 @@ app.use (req, res, next) ->
 	next()
 
 app.post   "/project/:project_id/compile", bodyParser.json(limit: "5mb"), CompileController.compile
+app.post   "/project/:project_id/compile/:session_id/stop", CompileController.stopCompile
 app.delete "/project/:project_id", CompileController.clearCache
 
 app.get  "/project/:project_id/sync/code", CompileController.syncFromCode

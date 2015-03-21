@@ -10,6 +10,8 @@ Metrics = require "./Metrics"
 child_process = require "child_process"
 
 module.exports = CompileManager =
+	INPROGRESS_STREAMS: {}
+
 	doCompile: (request, _callback = (error, outputFiles, output) ->) ->
 		callback = (args...) ->
 			_callback(args...)
@@ -36,6 +38,9 @@ module.exports = CompileManager =
 					cpu_shares: request.cpu_shares
 				}, (error, stream) ->
 					return callback(error) if error?
+			
+					streamId = "#{request.project_id}:#{request.session_id}"
+					CompileManager.INPROGRESS_STREAMS[streamId] = stream
 					
 					output =
 						stdout: ""
@@ -57,10 +62,24 @@ module.exports = CompileManager =
 					stream.on "end", () ->
 						logger.log project_id: project_id, time_taken: Date.now() - timer.start, "done compile"
 						timer.done()
+						delete CompileManager.INPROGRESS_STREAMS[streamId]
 						OutputFileFinder.findOutputFiles project_id, request.resources, (error, outputFiles) ->
 							return callback(error) if error?
 							logger.log {outputFiles, project_id}, "got output files"
 							callback null, outputFiles, output
+	
+	stopCompile: (project_id, session_id, callback = (error) ->) ->
+		streamId = "#{project_id}:#{session_id}"
+		stream = CompileManager.INPROGRESS_STREAMS[streamId]
+		logger.log {project_id, session_id}, "stopping compile"
+		if !stream?
+			error = new Error("No such session")
+			error.statusCode = 404
+			logger.log {err: error, project_id, session_id}, "session not found"
+			return callback error
+		
+		stream.emit "kill"
+		callback()
 
 	syncFromCode: (project_id, file_name, line, column, callback = (error, pdfPositions) ->) ->
 		# If LaTeX was run in a virtual environment, the file path that synctex expects

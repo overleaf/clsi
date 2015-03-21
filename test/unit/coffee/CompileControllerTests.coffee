@@ -132,6 +132,23 @@ describe "CompileController", ->
 					)
 					.should.equal true
 
+	describe "stopCompile", ->
+		beforeEach ->
+			@CompileManager.stopCompile = sinon.stub().callsArg(2)
+			@req.params =
+				project_id: @project_id = "project-id-123"
+				session_id: @session_id = "session-id-123"
+			@res.send = sinon.stub()
+			@CompileController.stopCompile @req, @res, @next
+		
+		it "should stop the compile", ->
+			@CompileManager.stopCompile
+				.calledWith(@project_id, @session_id)
+				.should.equal true
+		
+		it "should return 204", ->
+			@res.send.calledWith(204).should.equal true
+
 	describe "syncFromCode", ->
 		beforeEach ->
 			@file = "main.tex"

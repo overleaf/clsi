@@ -37,6 +37,12 @@ module.exports = CompileController =
 								type: file.type
 							output: output
 					}
+	
+	stopCompile: (req, res, next) ->
+		{project_id, session_id} = req.params
+		CompileManager.stopCompile project_id, session_id, (error) ->
+			return next(error) if error?
+			res.send 204
 		
 	clearCache: (req, res, next = (error) ->) ->
 		ProjectPersistenceManager.clearProject req.params.project_id, (error) ->
