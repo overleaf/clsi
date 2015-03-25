@@ -34,10 +34,12 @@ module.exports = LatexRunner =
 			command = LatexRunner._pythonCommand mainFile
 		else if compiler == "r"
 			command = LatexRunner._rCommand mainFile
+		else if compiler == "command"
+			command = options.command
 		else
 			return callback new Error("unknown compiler: #{compiler}")
 
-		CommandRunner.run project_id, command, limits, callback
+		CommandRunner.run project_id, command, { env: options.env }, limits, callback
 
 	_latexmkBaseCommand: [ "latexmk", "-cd", "-f", "-jobname=output", "-auxdir=$COMPILE_DIR", "-outdir=$COMPILE_DIR"]
 
@@ -65,7 +67,7 @@ module.exports = LatexRunner =
 			Path.join("$COMPILE_DIR", mainFile)
 		]
 		
-	_pythonCommand: (mainFile) -> ["python", "-u", ".datajoy/run.py", mainFile]
+	_pythonCommand: (mainFile) -> ["python", "-u", "/usr/bin/datajoy-wrapper.py", mainFile]
 
-	_rCommand: (mainFile) -> ["Rscript", ".datajoy/run.R", mainFile]
+	_rCommand: (mainFile) -> ["Rscript", "/usr/bin/datajoy-wrapper.R", mainFile]
 

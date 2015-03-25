@@ -32,6 +32,8 @@ module.exports = CompileManager =
 				LatexRunner.runLatex request.project_id, {
 					mainFile:  request.rootResourcePath
 					compiler:  request.compiler
+					command:   request.command
+					env:       request.env
 					timeout:   request.timeout
 					processes: request.processes
 					memory:    request.memory

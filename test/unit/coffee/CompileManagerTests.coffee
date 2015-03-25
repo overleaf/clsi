@@ -41,6 +41,8 @@ describe "CompileManager", ->
 				project_id: @project_id = "project-id-123"
 				session_id: @session_id = "session-id-123"
 				compiler: @compiler = "pdflatex"
+				command: @command = []
+				env: @env = { "mock": "env" }
 				timeout: @timeout = 42000
 				processes: @processes = 42
 				memory:    @memory = 1024
@@ -69,10 +71,13 @@ describe "CompileManager", ->
 				.should.equal true
 
 		it "should run LaTeX with the given limits", ->
+			console.log @LatexRunner.runLatex.args
 			@LatexRunner.runLatex
 				.calledWith(@project_id, {
 					mainFile:  @rootResourcePath
 					compiler:  @compiler
+					command:   @command
+					env:       @env
 					timeout:   @timeout
 					processes: @processes = 42
 					memory:    @memory = 1024

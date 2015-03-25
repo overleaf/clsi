@@ -23,7 +23,7 @@ describe "LatexRunner", ->
 
 	describe "runLatex", ->
 		beforeEach ->
-			@CommandRunner.run = sinon.stub().callsArg(3)
+			@CommandRunner.run = sinon.stub().callsArg(4)
 
 		describe "normally", ->
 			beforeEach ->
@@ -38,7 +38,7 @@ describe "LatexRunner", ->
 
 			it "should run the latex command with the given limits", ->
 				@CommandRunner.run
-					.calledWith(@project_id, sinon.match.any, {
+					.calledWith(@project_id, sinon.match.any, sinon.match.any, {
 						timeout: @timeout
 						memory: @memory
 						cpu_shares: @cpu_shares

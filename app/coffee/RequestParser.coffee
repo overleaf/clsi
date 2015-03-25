@@ -1,5 +1,5 @@
 module.exports = RequestParser =
-	VALID_COMPILERS: ["pdflatex", "latex", "xelatex", "lualatex", "python", "r"]
+	VALID_COMPILERS: ["pdflatex", "latex", "xelatex", "lualatex", "python", "r", "command"]
 	MAX_TIMEOUT:    300  # Seconds
 	MAX_MEMORY:     4096 # Mb
 	MAX_CPU_SHARES: 4096 # Relative (1024 default)
@@ -25,6 +25,16 @@ module.exports = RequestParser =
 				validValues: @VALID_COMPILERS
 				default: "pdflatex"
 				type: "string"
+			
+			response.command = @_parseAttribute "command", 
+				compile.options.command
+				default: []
+				type: "object"
+			
+			response.env = @_parseAttribute "env", 
+				compile.options.env
+				default: {}
+				type: "object"
 				
 			response.timeout = @_parseAttribute "timeout",
 				compile.options.timeout
