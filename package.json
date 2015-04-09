@@ -22,7 +22,8 @@
     "sqlite3": "~2.2.0",
     "express": "^4.2.0",
     "body-parser": "^1.2.0",
-    "v8-profiler": "^5.2.4"
+    "v8-profiler": "^5.2.4",
+    "heapdump": "^0.3.5"
   },
   "devDependencies": {
     "mocha": "1.10.0",
