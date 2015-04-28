@@ -21,6 +21,7 @@ module.exports = LatexRunner =
 		# We want to run latexmk on the tex file which we will automatically
 		# generate from the Rtex file.
 		mainFile = mainFile.replace(/\.Rtex$/, ".tex")
+		privileged = false
 
 		if compiler == "pdflatex"
 			command = LatexRunner._pdflatexCommand mainFile
@@ -36,10 +37,13 @@ module.exports = LatexRunner =
 			command = LatexRunner._rCommand mainFile
 		else if compiler == "command"
 			command = options.command
+		else if compiler == "apt-get-install"
+			command = LatexRunner._aptGetInstallCommand options.package
+			privileged = true
 		else
 			return callback new Error("unknown compiler: #{compiler}")
 
-		CommandRunner.run project_id, command, { env: options.env }, limits, callback
+		CommandRunner.run project_id, command, { env: options.env, privileged }, limits, callback
 
 	_latexmkBaseCommand: [ "latexmk", "-cd", "-f", "-jobname=output", "-auxdir=$COMPILE_DIR", "-outdir=$COMPILE_DIR"]
 
@@ -70,4 +74,6 @@ module.exports = LatexRunner =
 	_pythonCommand: (mainFile) -> ["python", "-u", "/usr/bin/datajoy-wrapper.py", mainFile]
 
 	_rCommand: (mainFile) -> ["Rscript", "/usr/bin/datajoy-wrapper.R", mainFile]
+	
+	_aptGetInstallCommand: (pkg) -> ["apt-get", "install", "-y", pkg]
 

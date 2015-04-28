@@ -33,6 +33,7 @@ module.exports = CompileManager =
 					mainFile:  request.rootResourcePath
 					compiler:  request.compiler
 					command:   request.command
+					package:   request.package
 					env:       request.env
 					timeout:   request.timeout
 					processes: request.processes
