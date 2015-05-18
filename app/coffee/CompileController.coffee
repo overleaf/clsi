@@ -43,6 +43,13 @@ module.exports = CompileController =
 		CompileManager.stopCompile project_id, session_id, (error) ->
 			return next(error) if error?
 			res.send 204
+	
+	executeJupyterRequest: (req, res, next) ->
+		{project_id} = req.params
+		{code, msg_id, limits, engine} = req.body
+		CompileManager.executeJupyterRequest project_id, msg_id, engine, code, limits, (error) ->
+			return next(error) if error?
+			res.send 204
 		
 	clearCache: (req, res, next = (error) ->) ->
 		ProjectPersistenceManager.clearProject req.params.project_id, (error) ->

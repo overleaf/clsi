@@ -23,6 +23,7 @@ describe "CompileManager", ->
 					done: sinon.stub()
 				inc: sinon.stub()
 			}
+			"docker-runner-sharelatex": @DockerRunner = {}
 		@callback = sinon.stub()
 
 	describe "doCompile", ->
@@ -186,3 +187,29 @@ describe "CompileManager", ->
 						column: @column
 					}])
 					.should.equal true
+	
+	describe "executeJupyterRequest", ->
+		beforeEach ->
+			@msg_id = "message-123"
+			@engine = "python"
+			@code = 'hello world'
+			@limits = {"mock": "limits"}
+			@stream = new EventEmitter()
+			@DockerRunner.executeJupyterRequest = sinon.stub().callsArgWith(5, null, @stream)
+			@RealTimeApiManager.bufferMessageForSending = sinon.stub()
+			@CompileManager.executeJupyterRequest @project_id, @msg_id, @engine, @code, @limits, @callback
+			@stream.emit "data", @message = {"mock": "message"}
+			@stream.emit "end"
+			
+		it "should execute the request in the docker runner", ->
+			@DockerRunner.executeJupyterRequest
+				.calledWith(@project_id, @msg_id, @engine, @code, @limits)
+				.should.equal true
+		
+		it "should send emitted messages to the real time API", ->
+			@RealTimeApiManager.bufferMessageForSending
+				.calledWith(@project_id, @message)
+				.should.equal true
+		
+		it "should call the callback", ->
+			@callback.called.should.equal true

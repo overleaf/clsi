@@ -8,6 +8,7 @@ Path = require "path"
 logger = require "logger-sharelatex"
 Metrics = require "./Metrics"
 child_process = require "child_process"
+DockerRunner = require "docker-runner-sharelatex"
 
 module.exports = CompileManager =
 	INPROGRESS_STREAMS: {}
@@ -83,6 +84,16 @@ module.exports = CompileManager =
 		
 		stream.emit "kill"
 		callback()
+	
+	executeJupyterRequest: (project_id, msg_id, engine, code, limits, callback = (error) ->) ->
+		logger.log {project_id, msg_id, engine, code, limits}, "executing jupyter request"
+		DockerRunner.executeJupyterRequest project_id, msg_id, engine, code, limits, (error, stream) ->
+			return callback(error) if error?
+			stream.on "data", (message) ->
+				logger.log {message, msg_id, project_id}, "got response from jupyter kernel"
+				RealTimeApiManager.bufferMessageForSending project_id, message
+			stream.on "end", () ->
+				callback()
 
 	syncFromCode: (project_id, file_name, line, column, callback = (error, pdfPositions) ->) ->
 		# If LaTeX was run in a virtual environment, the file path that synctex expects
