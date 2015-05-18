@@ -228,3 +228,22 @@ describe "CompileController", ->
 		
 		it "should return 204", ->
 			@res.send.calledWith(204).should.equal true
+	
+	describe "interruptJupyterRequest", ->
+		beforeEach ->
+			@CompileManager.interruptJupyterRequest = sinon.stub().callsArg(2)
+			@req.params =
+				project_id: @project_id
+				msg_id: @msg_id = "messsage-123"
+			@res.send = sinon.stub()
+			@CompileController.interruptJupyterRequest @req, @res, @next
+		
+		it "should interrupt the request", ->
+			@CompileManager.interruptJupyterRequest
+				.calledWith(@project_id, @msg_id)
+				.should.equal true
+		
+		it "should return 204", ->
+			@res.send.calledWith(204).should.equal true
+		
+			

@@ -89,11 +89,26 @@ module.exports = CompileManager =
 		logger.log {project_id, msg_id, engine, code, limits}, "executing jupyter request"
 		DockerRunner.executeJupyterRequest project_id, msg_id, engine, code, limits, (error, stream) ->
 			return callback(error) if error?
+			stream_id = "#{project_id}:#{msg_id}"
+			CompileManager.INPROGRESS_STREAMS[stream_id] = stream
 			stream.on "data", (message) ->
 				logger.log {message, msg_id, project_id}, "got response from jupyter kernel"
 				RealTimeApiManager.bufferMessageForSending project_id, message
 			stream.on "end", () ->
+				delete CompileManager.INPROGRESS_STREAMS[stream_id]
 				callback()
+	
+	interruptJupyterRequest: (project_id, msg_id, callback = (error) ->) ->
+		logger.log {project_id, msg_id}, "interrupting jupyter request"
+		stream_id = "#{project_id}:#{msg_id}"
+		stream = CompileManager.INPROGRESS_STREAMS[stream_id]
+		if !stream?
+			error = new Error("No such execute_request")
+			error.statusCode = 404
+			logger.log {err: error, project_id, msg_id}, "execute_request not found"
+			return callback error
+		stream.emit "kill"
+		callback()
 
 	syncFromCode: (project_id, file_name, line, column, callback = (error, pdfPositions) ->) ->
 		# If LaTeX was run in a virtual environment, the file path that synctex expects

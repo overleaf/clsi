@@ -199,6 +199,8 @@ describe "CompileManager", ->
 			@RealTimeApiManager.bufferMessageForSending = sinon.stub()
 			@CompileManager.executeJupyterRequest @project_id, @msg_id, @engine, @code, @limits, @callback
 			@stream.emit "data", @message = {"mock": "message"}
+			
+			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@msg_id}"].should.exist
 			@stream.emit "end"
 			
 		it "should execute the request in the docker runner", ->
@@ -213,3 +215,32 @@ describe "CompileManager", ->
 		
 		it "should call the callback", ->
 			@callback.called.should.equal true
+			
+		it "should remove the stream from INPROGRESS_STREAMS", ->
+			stream = @CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@msg_id}"]
+			expect(stream).to.be.undefined
+	
+	describe "interruptJupyterRequest", ->
+		beforeEach ->
+			@msg_id = "message-123"
+			@stream =
+				emit: sinon.stub()
+		
+		describe "when the msg_id exists", ->
+			beforeEach ->
+				@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@msg_id}"] = @stream
+				@CompileManager.interruptJupyterRequest @project_id, @msg_id, @callback
+			
+			it "should send a kill signal to the stream", ->
+				@stream.emit.calledWith("kill").should.equal true
+				
+			it "should call the callback", ->
+				@callback.called.should.equal true
+			
+		describe "when the session_id does not exist", ->
+			beforeEach ->
+				@CompileManager.interruptJupyterRequest @project_id, @msg_id, @callback
+			
+			it "should call the callback with an error", ->
+				error = @callback.args[0][0]
+				error.statusCode.should.equal 404
