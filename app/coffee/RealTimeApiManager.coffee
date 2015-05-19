@@ -29,7 +29,7 @@ module.exports = RealTimeApiManager =
 	_sendAndClearBufferedMessages: (project_id) ->
 		RealTimeApiManager.sendMessage project_id, RealTimeApiManager.BUFFERED_MESSAGES[project_id], (err) ->
 			if err?
-				logger.err {err, project_id, message}, "error sending message to real-time API"
+				logger.err {err, project_id}, "error sending message to real-time API"
 		delete RealTimeApiManager.BUFFERED_MESSAGES[project_id]
 
 	sendMessage: (project_id, message, callback = (error) ->) ->
