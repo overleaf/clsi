@@ -85,9 +85,9 @@ module.exports = CompileManager =
 		stream.emit "kill"
 		callback()
 	
-	executeJupyterRequest: (project_id, msg_id, engine, code, limits, callback = (error) ->) ->
-		logger.log {project_id, msg_id, engine, code, limits}, "executing jupyter request"
-		DockerRunner.executeJupyterRequest project_id, msg_id, engine, code, limits, (error, stream) ->
+	sendJupyterMessage: (project_id, msg_id, engine, msg_type, content, limits, callback = (error) ->) ->
+		logger.log {project_id, msg_id, engine, msg_type, content, limits}, "sending jupyter message"
+		DockerRunner.sendJupyterMessage project_id, msg_id, engine, msg_type, content, limits, (error, stream) ->
 			return callback(error) if error?
 			stream_id = "#{project_id}:#{msg_id}"
 			CompileManager.INPROGRESS_STREAMS[stream_id] = stream

@@ -207,23 +207,24 @@ describe "CompileController", ->
 				)
 				.should.equal true
 
-	describe "executeJupyterRequest", ->
+	describe "sendJupyterRequest", ->
 		beforeEach ->
 			@req.params =
 				project_id: @project_id
 			@req.body = {
 				msg_id: @msg_id = "messsage-123"
-				code:   @code = "print 'hello world'"
+				msg_type: @msg_type = "execute_request"
+				content: @content = {mock: "content"}
 				engine: @engine = "python"
 				limits: @limits = {mock: "limits"}
 			}
 			@res.send = sinon.stub()
-			@CompileManager.executeJupyterRequest = sinon.stub().callsArg(5)
-			@CompileController.executeJupyterRequest @req, @res, @next
+			@CompileManager.sendJupyterMessage = sinon.stub().callsArg(6)
+			@CompileController.sendJupyterMessage @req, @res, @next
 		
 		it "should execute the request", ->
-			@CompileManager.executeJupyterRequest
-				.calledWith(@project_id, @msg_id, @engine, @code, @limits)
+			@CompileManager.sendJupyterMessage
+				.calledWith(@project_id, @msg_id, @engine, @msg_type, @content, @limits)
 				.should.equal true
 		
 		it "should return 204", ->

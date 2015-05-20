@@ -44,10 +44,10 @@ module.exports = CompileController =
 			return next(error) if error?
 			res.send 204
 	
-	executeJupyterRequest: (req, res, next) ->
+	sendJupyterMessage: (req, res, next) ->
 		{project_id} = req.params
-		{code, msg_id, limits, engine} = req.body
-		CompileManager.executeJupyterRequest project_id, msg_id, engine, code, limits, (error) ->
+		{msg_id, msg_type, content, limits, engine} = req.body
+		CompileManager.sendJupyterMessage project_id, msg_id, engine, msg_type, content, limits, (error) ->
 			return next(error) if error?
 			res.send 204
 	

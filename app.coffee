@@ -33,7 +33,7 @@ app.post   "/project/:project_id/compile", bodyParser.json(limit: "5mb"), Compil
 app.post   "/project/:project_id/compile/:session_id/stop", CompileController.stopCompile
 app.delete "/project/:project_id", CompileController.clearCache
 
-app.post "/project/:project_id/execute_request", bodyParser.json(limit: "5mb"), CompileController.executeJupyterRequest
+app.post "/project/:project_id/request", bodyParser.json(limit: "5mb"), CompileController.sendJupyterMessage
 app.post "/project/:project_id/request/:msg_id/interrupt", CompileController.interruptJupyterRequest
 
 app.get  "/project/:project_id/sync/code", CompileController.syncFromCode

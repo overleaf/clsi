@@ -188,24 +188,25 @@ describe "CompileManager", ->
 					}])
 					.should.equal true
 	
-	describe "executeJupyterRequest", ->
+	describe "sendJupyterMessage", ->
 		beforeEach ->
 			@msg_id = "message-123"
 			@engine = "python"
-			@code = 'hello world'
+			@msg_type = "execute_request"
+			@content = {mock: "content"}
 			@limits = {"mock": "limits"}
 			@stream = new EventEmitter()
-			@DockerRunner.executeJupyterRequest = sinon.stub().callsArgWith(5, null, @stream)
+			@DockerRunner.sendJupyterMessage = sinon.stub().callsArgWith(6, null, @stream)
 			@RealTimeApiManager.bufferMessageForSending = sinon.stub()
-			@CompileManager.executeJupyterRequest @project_id, @msg_id, @engine, @code, @limits, @callback
+			@CompileManager.sendJupyterMessage @project_id, @msg_id, @engine, @msg_type, @content, @limits, @callback
 			@stream.emit "data", @message = {"mock": "message"}
 			
 			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@msg_id}"].should.exist
 			@stream.emit "end"
 			
 		it "should execute the request in the docker runner", ->
-			@DockerRunner.executeJupyterRequest
-				.calledWith(@project_id, @msg_id, @engine, @code, @limits)
+			@DockerRunner.sendJupyterMessage
+				.calledWith(@project_id, @msg_id, @engine, @msg_type, @content, @limits)
 				.should.equal true
 		
 		it "should send emitted messages to the real time API", ->
