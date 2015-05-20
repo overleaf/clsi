@@ -188,7 +188,7 @@ describe "CompileManager", ->
 					}])
 					.should.equal true
 	
-	describe "sendJupyterMessage", ->
+	describe "sendJupyterRequest", ->
 		beforeEach ->
 			@msg_id = "message-123"
 			@engine = "python"
@@ -196,16 +196,29 @@ describe "CompileManager", ->
 			@content = {mock: "content"}
 			@limits = {"mock": "limits"}
 			@stream = new EventEmitter()
-			@DockerRunner.sendJupyterMessage = sinon.stub().callsArgWith(6, null, @stream)
+			@resouces = ["mock", "resources"]
+			@DockerRunner.sendJupyterRequest = sinon.stub().callsArgWith(6, null, @stream)
 			@RealTimeApiManager.bufferMessageForSending = sinon.stub()
-			@CompileManager.sendJupyterMessage @project_id, @msg_id, @engine, @msg_type, @content, @limits, @callback
+			@FilesystemManager.initProject = sinon.stub().callsArg(1)
+			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(2)
+			@CompileManager.sendJupyterRequest @project_id, @resources, @msg_id, @engine, @msg_type, @content, @limits, @callback
 			@stream.emit "data", @message = {"mock": "message"}
 			
 			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@msg_id}"].should.exist
 			@stream.emit "end"
 			
+		it "should init the project", ->
+			@FilesystemManager.initProject
+				.calledWith(@project_id)
+				.should.equal true
+
+		it "should write the resources to disk", ->
+			@ResourceWriter.syncResourcesToDisk
+				.calledWith(@project_id, @resources)
+				.should.equal true
+			
 		it "should execute the request in the docker runner", ->
-			@DockerRunner.sendJupyterMessage
+			@DockerRunner.sendJupyterRequest
 				.calledWith(@project_id, @msg_id, @engine, @msg_type, @content, @limits)
 				.should.equal true
 		

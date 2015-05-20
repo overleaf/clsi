@@ -217,14 +217,15 @@ describe "CompileController", ->
 				content: @content = {mock: "content"}
 				engine: @engine = "python"
 				limits: @limits = {mock: "limits"}
+				resources: @resources = ["mock", "resources"]
 			}
 			@res.send = sinon.stub()
-			@CompileManager.sendJupyterMessage = sinon.stub().callsArg(6)
-			@CompileController.sendJupyterMessage @req, @res, @next
+			@CompileManager.sendJupyterRequest = sinon.stub().callsArg(7)
+			@CompileController.sendJupyterRequest @req, @res, @next
 		
 		it "should execute the request", ->
-			@CompileManager.sendJupyterMessage
-				.calledWith(@project_id, @msg_id, @engine, @msg_type, @content, @limits)
+			@CompileManager.sendJupyterRequest
+				.calledWith(@project_id, @resources, @msg_id, @engine, @msg_type, @content, @limits)
 				.should.equal true
 		
 		it "should return 204", ->

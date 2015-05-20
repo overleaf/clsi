@@ -85,18 +85,27 @@ module.exports = CompileManager =
 		stream.emit "kill"
 		callback()
 	
-	sendJupyterMessage: (project_id, msg_id, engine, msg_type, content, limits, callback = (error) ->) ->
+	sendJupyterRequest: (project_id, resources, msg_id, engine, msg_type, content, limits, callback = (error) ->) ->
 		logger.log {project_id, msg_id, engine, msg_type, content, limits}, "sending jupyter message"
-		DockerRunner.sendJupyterMessage project_id, msg_id, engine, msg_type, content, limits, (error, stream) ->
+		FilesystemManager.initProject project_id, (error) ->
 			return callback(error) if error?
-			stream_id = "#{project_id}:#{msg_id}"
-			CompileManager.INPROGRESS_STREAMS[stream_id] = stream
-			stream.on "data", (message) ->
-				logger.log {message, msg_id, project_id}, "got response from jupyter kernel"
-				RealTimeApiManager.bufferMessageForSending project_id, message
-			stream.on "end", () ->
-				delete CompileManager.INPROGRESS_STREAMS[stream_id]
-				callback()
+			ResourceWriter.syncResourcesToDisk project_id, resources, (error) ->
+				return callback(error) if error?
+				DockerRunner.sendJupyterRequest project_id, msg_id, engine, msg_type, content, limits, (error, stream) ->
+					return callback(error) if error?
+					stream_id = "#{project_id}:#{msg_id}"
+					CompileManager.INPROGRESS_STREAMS[stream_id] = stream
+					stream.on "data", (message) ->
+						message.header ||= {}
+						if message.msg_type?
+							message.header.msg_type = message.msg_type
+							delete message.msg_type
+						message.header.msg_id = msg_id
+						logger.log {message, msg_id, project_id}, "got response from jupyter kernel"
+						RealTimeApiManager.bufferMessageForSending project_id, message
+					stream.on "end", () ->
+						delete CompileManager.INPROGRESS_STREAMS[stream_id]
+						callback()
 	
 	interruptJupyterRequest: (project_id, msg_id, callback = (error) ->) ->
 		logger.log {project_id, msg_id}, "interrupting jupyter request"
