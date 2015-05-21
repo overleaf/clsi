@@ -43,7 +43,7 @@ module.exports = CompileManager =
 				}, (error, stream) ->
 					return callback(error) if error?
 			
-					streamId = "#{request.project_id}:#{request.session_id}"
+					streamId = "#{request.project_id}:#{request.request_id}"
 					CompileManager.INPROGRESS_STREAMS[streamId] = stream
 					
 					output =
@@ -53,8 +53,8 @@ module.exports = CompileManager =
 					msg_id = 0
 					stream.on "data", (message) ->
 						message.header ||= {}
-						message.header.session = request.session_id
 						message.header.msg_id = msg_id.toString()
+						message.request_id = request.request_id
 						msg_id++
 						logger.log {message, project_id}, "got output message"
 						if message.msg_type == "stream"
@@ -97,9 +97,6 @@ module.exports = CompileManager =
 					CompileManager.INPROGRESS_STREAMS[stream_id] = stream
 					stream.on "data", (message) ->
 						message.header ||= {}
-						if message.msg_type?
-							message.header.msg_type = message.msg_type
-							delete message.msg_type
 						message.header.msg_id = msg_id
 						logger.log {message, msg_id, project_id}, "got response from jupyter kernel"
 						RealTimeApiManager.bufferMessageForSending project_id, message

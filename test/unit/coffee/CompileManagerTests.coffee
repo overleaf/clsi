@@ -40,7 +40,7 @@ describe "CompileManager", ->
 				resources: @resources = "mock-resources"
 				rootResourcePath: @rootResourcePath = "main.tex"
 				project_id: @project_id = "project-id-123"
-				session_id: @session_id = "session-id-123"
+				request_id: @request_id = "session-id-123"
 				compiler: @compiler = "pdflatex"
 				command: @command = []
 				package: @package = ""
@@ -59,7 +59,7 @@ describe "CompileManager", ->
 			@CompileManager.doCompile @request, @callback
 			@stream.emit "data", @message = { "mock": "message" }
 			
-			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@session_id}"].should.equal @stream
+			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@request_id}"].should.equal @stream
 			@stream.emit "end"
 			
 		it "should init the project", ->
@@ -101,20 +101,20 @@ describe "CompileManager", ->
 			@callback.calledWith(null, @output_files).should.equal true
 			
 		it "should remove the stream from INPROGRESS_STREAMS", ->
-			stream = @CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@session_id}"]
+			stream = @CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@request_id}"]
 			expect(stream).to.be.undefined
 	
 	describe "stopCompile", ->
 		beforeEach ->
 			@project_id = "project-id-123"
-			@session_id = "session-id-123"
+			@request_id = "session-id-123"
 		
-		describe "when the session_id exists", ->
+		describe "when the request_id exists", ->
 			beforeEach ->
 				@stream =
 					emit: sinon.stub()
-				@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@session_id}"] = @stream
-				@CompileManager.stopCompile @project_id, @session_id, @callback
+				@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@request_id}"] = @stream
+				@CompileManager.stopCompile @project_id, @request_id, @callback
 			
 			it "should send a kill signal to the stream", ->
 				@stream.emit.calledWith("kill").should.equal true
@@ -122,9 +122,9 @@ describe "CompileManager", ->
 			it "should call the callback", ->
 				@callback.called.should.equal true
 			
-		describe "when the session_id does not exist", ->
+		describe "when the request_id does not exist", ->
 			beforeEach ->
-				@CompileManager.stopCompile @project_id, @session_id, @callback
+				@CompileManager.stopCompile @project_id, @request_id, @callback
 			
 			it "should call the callback with an error", ->
 				error = @callback.args[0][0]
@@ -251,7 +251,7 @@ describe "CompileManager", ->
 			it "should call the callback", ->
 				@callback.called.should.equal true
 			
-		describe "when the session_id does not exist", ->
+		describe "when the request_id does not exist", ->
 			beforeEach ->
 				@CompileManager.interruptJupyterRequest @project_id, @msg_id, @callback
 			

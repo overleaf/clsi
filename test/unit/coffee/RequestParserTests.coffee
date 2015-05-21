@@ -14,7 +14,7 @@ describe "RequestParser", ->
 			content: "Hello world"
 		@validRequest =
 			compile:
-				session_id: "session-id"
+				request_id: "request-id"
 				token: "token-123"
 				options:
 					compiler:   "pdflatex"
