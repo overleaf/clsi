@@ -190,21 +190,21 @@ describe "CompileManager", ->
 	
 	describe "sendJupyterRequest", ->
 		beforeEach ->
-			@msg_id = "message-123"
+			@request_id = "message-123"
 			@engine = "python"
 			@msg_type = "execute_request"
 			@content = {mock: "content"}
 			@limits = {"mock": "limits"}
 			@stream = new EventEmitter()
 			@resouces = ["mock", "resources"]
-			@DockerRunner.sendJupyterRequest = sinon.stub().callsArgWith(6, null, @stream)
+			@DockerRunner.sendJupyterRequest = sinon.stub().callsArgWith(5, null, @stream)
 			@RealTimeApiManager.bufferMessageForSending = sinon.stub()
 			@FilesystemManager.initProject = sinon.stub().callsArg(1)
 			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(2)
-			@CompileManager.sendJupyterRequest @project_id, @resources, @msg_id, @engine, @msg_type, @content, @limits, @callback
+			@CompileManager.sendJupyterRequest @project_id, @resources, @request_id, @engine, @msg_type, @content, @limits, @callback
 			@stream.emit "data", @message = {"mock": "message"}
 			
-			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@msg_id}"].should.exist
+			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@request_id}"].should.exist
 			@stream.emit "end"
 			
 		it "should init the project", ->
@@ -219,7 +219,7 @@ describe "CompileManager", ->
 			
 		it "should execute the request in the docker runner", ->
 			@DockerRunner.sendJupyterRequest
-				.calledWith(@project_id, @msg_id, @engine, @msg_type, @content, @limits)
+				.calledWith(@project_id, @engine, @msg_type, @content, @limits)
 				.should.equal true
 		
 		it "should send emitted messages to the real time API", ->
@@ -231,19 +231,19 @@ describe "CompileManager", ->
 			@callback.called.should.equal true
 			
 		it "should remove the stream from INPROGRESS_STREAMS", ->
-			stream = @CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@msg_id}"]
+			stream = @CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@request_id}"]
 			expect(stream).to.be.undefined
 	
 	describe "interruptJupyterRequest", ->
 		beforeEach ->
-			@msg_id = "message-123"
+			@request_id = "message-123"
 			@stream =
 				emit: sinon.stub()
 		
-		describe "when the msg_id exists", ->
+		describe "when the request_id exists", ->
 			beforeEach ->
-				@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@msg_id}"] = @stream
-				@CompileManager.interruptJupyterRequest @project_id, @msg_id, @callback
+				@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@request_id}"] = @stream
+				@CompileManager.interruptJupyterRequest @project_id, @request_id, @callback
 			
 			it "should send a kill signal to the stream", ->
 				@stream.emit.calledWith("kill").should.equal true
@@ -253,7 +253,7 @@ describe "CompileManager", ->
 			
 		describe "when the request_id does not exist", ->
 			beforeEach ->
-				@CompileManager.interruptJupyterRequest @project_id, @msg_id, @callback
+				@CompileManager.interruptJupyterRequest @project_id, @request_id, @callback
 			
 			it "should call the callback with an error", ->
 				error = @callback.args[0][0]

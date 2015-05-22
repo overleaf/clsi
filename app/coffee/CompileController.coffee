@@ -46,14 +46,14 @@ module.exports = CompileController =
 	
 	sendJupyterRequest: (req, res, next) ->
 		{project_id} = req.params
-		{msg_id, msg_type, content, limits, engine, resources} = req.body
-		CompileManager.sendJupyterRequest project_id, resources, msg_id, engine, msg_type, content, limits, (error) ->
+		{request_id, msg_type, content, limits, engine, resources} = req.body
+		CompileManager.sendJupyterRequest project_id, resources, request_id, engine, msg_type, content, limits, (error) ->
 			return next(error) if error?
 			res.send 204
 	
 	interruptJupyterRequest: (req, res, next) ->
-		{project_id, msg_id} = req.params
-		CompileManager.interruptJupyterRequest project_id, msg_id, (error) ->
+		{project_id, request_id} = req.params
+		CompileManager.interruptJupyterRequest project_id, request_id, (error) ->
 			return next(error) if error?
 			res.send 204
 		

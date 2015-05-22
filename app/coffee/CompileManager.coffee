@@ -85,33 +85,32 @@ module.exports = CompileManager =
 		stream.emit "kill"
 		callback()
 	
-	sendJupyterRequest: (project_id, resources, msg_id, engine, msg_type, content, limits, callback = (error) ->) ->
-		logger.log {project_id, msg_id, engine, msg_type, content, limits}, "sending jupyter message"
+	sendJupyterRequest: (project_id, resources, request_id, engine, msg_type, content, limits, callback = (error) ->) ->
+		logger.log {project_id, request_id, engine, msg_type, content, limits}, "sending jupyter message"
 		FilesystemManager.initProject project_id, (error) ->
 			return callback(error) if error?
 			ResourceWriter.syncResourcesToDisk project_id, resources, (error) ->
 				return callback(error) if error?
-				DockerRunner.sendJupyterRequest project_id, msg_id, engine, msg_type, content, limits, (error, stream) ->
+				DockerRunner.sendJupyterRequest project_id, engine, msg_type, content, limits, (error, stream) ->
 					return callback(error) if error?
-					stream_id = "#{project_id}:#{msg_id}"
+					stream_id = "#{project_id}:#{request_id}"
 					CompileManager.INPROGRESS_STREAMS[stream_id] = stream
 					stream.on "data", (message) ->
-						message.header ||= {}
-						message.header.msg_id = msg_id
-						logger.log {message, msg_id, project_id}, "got response from jupyter kernel"
+						message.request_id = request_id
+						logger.log {message, request_id, project_id}, "got response from jupyter kernel"
 						RealTimeApiManager.bufferMessageForSending project_id, message
 					stream.on "end", () ->
 						delete CompileManager.INPROGRESS_STREAMS[stream_id]
 						callback()
 	
-	interruptJupyterRequest: (project_id, msg_id, callback = (error) ->) ->
-		logger.log {project_id, msg_id}, "interrupting jupyter request"
-		stream_id = "#{project_id}:#{msg_id}"
+	interruptJupyterRequest: (project_id, request_id, callback = (error) ->) ->
+		logger.log {project_id, request_id}, "interrupting jupyter request"
+		stream_id = "#{project_id}:#{request_id}"
 		stream = CompileManager.INPROGRESS_STREAMS[stream_id]
 		if !stream?
 			error = new Error("No such execute_request")
 			error.statusCode = 404
-			logger.log {err: error, project_id, msg_id}, "execute_request not found"
+			logger.log {err: error, project_id, request_id}, "execute_request not found"
 			return callback error
 		stream.emit "kill"
 		callback()

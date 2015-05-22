@@ -212,7 +212,7 @@ describe "CompileController", ->
 			@req.params =
 				project_id: @project_id
 			@req.body = {
-				msg_id: @msg_id = "messsage-123"
+				request_id: @request_id = "messsage-123"
 				msg_type: @msg_type = "execute_request"
 				content: @content = {mock: "content"}
 				engine: @engine = "python"
@@ -225,7 +225,7 @@ describe "CompileController", ->
 		
 		it "should execute the request", ->
 			@CompileManager.sendJupyterRequest
-				.calledWith(@project_id, @resources, @msg_id, @engine, @msg_type, @content, @limits)
+				.calledWith(@project_id, @resources, @request_id, @engine, @msg_type, @content, @limits)
 				.should.equal true
 		
 		it "should return 204", ->
@@ -236,13 +236,13 @@ describe "CompileController", ->
 			@CompileManager.interruptJupyterRequest = sinon.stub().callsArg(2)
 			@req.params =
 				project_id: @project_id
-				msg_id: @msg_id = "messsage-123"
+				request_id: @request_id = "messsage-123"
 			@res.send = sinon.stub()
 			@CompileController.interruptJupyterRequest @req, @res, @next
 		
 		it "should interrupt the request", ->
 			@CompileManager.interruptJupyterRequest
-				.calledWith(@project_id, @msg_id)
+				.calledWith(@project_id, @request_id)
 				.should.equal true
 		
 		it "should return 204", ->
