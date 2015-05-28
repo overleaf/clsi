@@ -57,7 +57,7 @@ module.exports = CompileManager =
 						message.request_id = request.request_id
 						msg_id++
 						logger.log {message, project_id}, "got output message"
-						if message.msg_type == "stream"
+						if message.header.msg_type == "stream"
 							output[message.content.name] += message.content.text
 						RealTimeApiManager.bufferMessageForSending project_id, message
 								
