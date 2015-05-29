@@ -47,11 +47,13 @@ module.exports = CompileController =
 	sendJupyterRequest: (req, res, next) ->
 		{project_id} = req.params
 		{request_id, msg_type, content, limits, engine, resources} = req.body
-		if limits.timeout?
-			limits.timeout = limits.timeout * 1000 # Request is in seconds, internally we use ms
-		CompileManager.sendJupyterRequest project_id, resources, request_id, engine, msg_type, content, limits, (error) ->
+		RequestParser.parseResources resources, (error, resources) ->
 			return next(error) if error?
-			res.send 204
+			if limits.timeout?
+				limits.timeout = limits.timeout * 1000 # Request is in seconds, internally we use ms
+			CompileManager.sendJupyterRequest project_id, resources, request_id, engine, msg_type, content, limits, (error) ->
+				return next(error) if error?
+				res.send 204
 	
 	interruptJupyterRequest: (req, res, next) ->
 		{project_id, request_id} = req.params

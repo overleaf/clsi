@@ -216,17 +216,26 @@ describe "CompileController", ->
 				msg_type: @msg_type = "execute_request"
 				content: @content = {mock: "content"}
 				engine: @engine = "python"
-				limits: @limits = {mock: "limits"}
+				limits: @limits = {mock: "limits", timeout: 42}
 				resources: @resources = ["mock", "resources"]
 			}
 			@res.send = sinon.stub()
 			@CompileManager.sendJupyterRequest = sinon.stub().callsArg(7)
+			@RequestParser.parseResources = sinon.stub().callsArgWith(1, null, @parsed_resources = ["parsed", "resources"])
 			@CompileController.sendJupyterRequest @req, @res, @next
+		
+		it "should parse the resources", ->
+			@RequestParser.parseResources
+				.calledWith(@resources)
+				.should.equal true
 		
 		it "should execute the request", ->
 			@CompileManager.sendJupyterRequest
-				.calledWith(@project_id, @resources, @request_id, @engine, @msg_type, @content, @limits)
+				.calledWith(@project_id, @parsed_resources, @request_id, @engine, @msg_type, @content, @limits)
 				.should.equal true
+		
+		it "should convert the limits.timeout to millseconds", ->
+			@limits.timeout.should.equal 42000
 		
 		it "should return 204", ->
 			@res.send.calledWith(204).should.equal true

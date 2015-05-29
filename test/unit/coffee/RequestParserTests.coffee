@@ -33,7 +33,7 @@ describe "RequestParser", ->
 			@RequestParser.parse [], @callback
 
 		it "should return an error", ->
-			@callback.calledWith("top level object should have a compile attribute")
+			@callback.calledWith(new Error "top level object should have a compile attribute")
 				.should.equal true
 
 	describe "without a compile attribute", ->
@@ -41,7 +41,7 @@ describe "RequestParser", ->
 			@RequestParser.parse {}, @callback
 
 		it "should return an error", ->
-			@callback.calledWith("top level object should have a compile attribute")
+			@callback.calledWith(new Error "top level object should have a compile attribute")
 				.should.equal true
 
 	describe "without a valid compiler", ->
@@ -50,7 +50,7 @@ describe "RequestParser", ->
 			@RequestParser.parse @validRequest, @callback
 
 		it "should return an error", ->
-			@callback.calledWith("compiler attribute should be one of: pdflatex, latex, xelatex, lualatex, python, r, command, apt-get-install")
+			@callback.calledWith(new Error "compiler attribute should be one of: pdflatex, latex, xelatex, lualatex, python, r, command, apt-get-install")
 				.should.equal true
 
 	describe "without a compiler specified", ->
@@ -160,7 +160,7 @@ describe "RequestParser", ->
 			@RequestParser.parse @validRequest, @callback
 
 		it "should return an error", ->
-			@callback.calledWith("all resources should have a path attribute")
+			@callback.calledWith(new Error "all resources should have a path attribute")
 				.should.equal true
 
 	describe "with a resource with a path", ->
@@ -182,8 +182,7 @@ describe "RequestParser", ->
 		it "should return an error", ->
 			@callback
 				.calledWith(
-					"resource modified date could not be understood: "+
-					@validResource.modified
+					new Error("resource modified date could not be understood: #{@validResource.modified}")
 				)
 				.should.equal true
 
@@ -207,7 +206,7 @@ describe "RequestParser", ->
 			@RequestParser.parse @validRequest, @callback
 
 		it "should return an error", ->
-			@callback.calledWith("all resources should have either a url or content attribute")
+			@callback.calledWith(new Error "all resources should have either a url or content attribute")
 				.should.equal true
 
 	describe "with a resource where the content is not a string", ->
@@ -217,7 +216,7 @@ describe "RequestParser", ->
 			@RequestParser.parse (@validRequest), @callback
 
 		it "should return an error", ->
-			@callback.calledWith("content attribute should be a string")
+			@callback.calledWith(new Error "content attribute should be a string")
 				.should.equal true
 
 	describe "with a resource where the url is not a string", ->
@@ -227,7 +226,7 @@ describe "RequestParser", ->
 			@RequestParser.parse (@validRequest), @callback
 
 		it "should return an error", ->
-			@callback.calledWith("url attribute should be a string")
+			@callback.calledWith(new Error "url attribute should be a string")
 				.should.equal true
 
 	describe "with a resource with a url", ->
@@ -274,7 +273,7 @@ describe "RequestParser", ->
 			@RequestParser.parse (@validRequest), @callback
 
 		it "should return an error", ->
-			@callback.calledWith("rootResourcePath attribute should be a string")
+			@callback.calledWith(new Error "rootResourcePath attribute should be a string")
 				.should.equal true
 
 
