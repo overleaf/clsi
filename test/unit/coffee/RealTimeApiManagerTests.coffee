@@ -26,8 +26,8 @@ describe "RealTimeApiManager", ->
 			@RealTimeApiManager.sendMessage = sinon.stub().callsArg(2)
 			
 			@messages = [
-				{ msg_type: "stream", content: { name: "stdout", text: "Hello" } },
-				{ msg_type: "stream", content: { name: "stderr", text: "World" } }
+				{ header: { msg_type: "stream" }, content: { name: "stdout", text: "Hello" } },
+				{ header: { msg_type: "stream" }, content: { name: "stderr", text: "World" } }
 			]
 
 		describe "with multiple messages in quick succession", ->
@@ -67,19 +67,19 @@ describe "RealTimeApiManager", ->
 		describe "with multiple messages on the same stream in quick succession", ->
 			beforeEach (done) ->
 				@RealTimeApiManager.bufferMessageForSending @project_id, {
-					msg_type: "stream", content: { name: "stdout", text: "Hello" } 
+					header: { msg_type: "stream" }, content: { name: "stdout", text: "Hello" } 
 				}
 				@RealTimeApiManager.bufferMessageForSending @project_id, {
-					msg_type: "stream", content: { name: "stdout", text: " world" } 
+					header: { msg_type: "stream" }, content: { name: "stdout", text: " world" } 
 				}
 				@RealTimeApiManager.bufferMessageForSending @project_id, {
-					msg_type: "stream", content: { name: "stderr", text: "foo" } 
+					header: { msg_type: "stream" }, content: { name: "stderr", text: "foo" } 
 				}
 				@RealTimeApiManager.bufferMessageForSending @project_id, {
-					msg_type: "stream", content: { name: "stderr", text: "bar" } 
+					header: { msg_type: "stream" }, content: { name: "stderr", text: "bar" } 
 				}
 				@RealTimeApiManager.bufferMessageForSending @project_id, {
-					msg_type: "stream", content: { name: "stdout", text: "baz" } 
+					header: { msg_type: "stream" }, content: { name: "stdout", text: "baz" } 
 				}
 				
 				setTimeout () ->
@@ -89,9 +89,40 @@ describe "RealTimeApiManager", ->
 			it "should concat adjacent messages on the same stream", ->
 				messages = @RealTimeApiManager.sendMessage.args[0][1]
 				expect(messages).to.deep.equal [
-					{ msg_type: "stream", content: { name: "stdout", text: "Hello world" } }
-					{ msg_type: "stream", content: { name: "stderr", text: "foobar" } }
-					{ msg_type: "stream", content: { name: "stdout", text: "baz" } }
+					{ header: { msg_type: "stream" }, content: { name: "stdout", text: "Hello world" } }
+					{ header: { msg_type: "stream" }, content: { name: "stderr", text: "foobar" } }
+					{ header: { msg_type: "stream" }, content: { name: "stdout", text: "baz" } }
+				]
+		
+		describe "with a message longer then MESSAGE_LENGTH_LIMIT", ->
+			beforeEach (done) ->
+				@RealTimeApiManager.MESSAGE_LENGTH_LIMIT = 5
+				@RealTimeApiManager.bufferMessageForSending @project_id, {
+					header: { msg_type: "stream" }, content: { name: "stdout", text: "1234567890" }
+				}
+				@RealTimeApiManager.bufferMessageForSending @project_id, {
+					header: { msg_type: "execute_result" }, content: { 
+						data: {
+							"text/plain": "1234567890"
+							"text/html":  "1234567890"
+						}
+					}
+				}
+				
+				setTimeout () ->
+					done()
+				, @RealTimeApiManager.BUFFER_DELAY * 2
+			
+			it "should send a truncated version of the message", ->
+				messages = @RealTimeApiManager.sendMessage.args[0][1]
+				expect(messages).to.deep.equal [
+					{ header: { msg_type: "stream" }, content: { name: "stdout", text: "12345..." } }
+					{ header: { msg_type: "execute_result" }, content: { 
+						data: {
+							"text/plain": "12345..."
+							# Should remove unused data types, i.e. text/html
+						}
+					} }
 				]
 				
 	describe "sendMessage", ->
