@@ -39,15 +39,20 @@ app.post "/project/:project_id/request/:request_id/interrupt", CompileController
 app.get  "/project/:project_id/sync/code", CompileController.syncFromCode
 app.get  "/project/:project_id/sync/pdf", CompileController.syncFromPdf
 
-staticServer = express.static Settings.path.compilesDir, setHeaders: (res, path, stat) ->
+ForbidSymlinks = require "./app/js/StaticServerForbidSymlinks"
+
+# create a static server which does not allow access to any symlinks
+# avoids possible mismatch of root directory between middleware check
+# and serving the files
+staticServer = ForbidSymlinks express.static, Settings.path.compilesDir, setHeaders: (res, path, stat) ->
 	if Path.basename(path).match(/\.pdf$/)
 		res.set("Content-Type", "application/pdf")
 	else
 		# Force plain treatment of other file types to prevent hosting of HTTP/JS files
 		# that could be used in same-origin/XSS attacks.
 		res.set("Content-Type", "text/plain")
-		
-app.get "/project/:project_id/output/*", require("./app/js/SymlinkCheckerMiddlewear"), (req, res, next) ->
+
+app.get "/project/:project_id/output/*", (req, res, next) ->
 	req.url = "/#{req.params.project_id}/#{req.params[0]}"
 	staticServer(req, res, next)
 
@@ -73,12 +78,25 @@ app.get "/health_check", (req, res)->
 	res.contentType(resCacher?.setContentType)
 	res.send resCacher?.code, resCacher?.body
 
+profiler = require "v8-profiler"
+app.get "/profile", (req, res) ->
+	time = parseInt(req.query.time || "1000")
+	profiler.startProfiling("test")
+	setTimeout () ->
+		profile = profiler.stopProfiling("test")
+		res.json(profile)
+	, time
+
+app.get "/heapdump", (req, res)->
+	require('heapdump').writeSnapshot '/tmp/' + Date.now() + '.clsi.heapsnapshot', (err, filename)->
+		res.send filename
+
 app.use (error, req, res, next) ->
 	logger.error err: error, "server error"
 	res.send error?.statusCode || 500
 
 app.listen port = (Settings.internal?.clsi?.port or 3013), host = (Settings.internal?.clsi?.host or "localhost"), (error) ->
-	logger.log "CLSI listening on #{host}:#{port}"
+	logger.info "CLSI starting up, listening on #{host}:#{port}"
 
 setInterval () ->
 	ProjectPersistenceManager.clearExpiredProjects()
