@@ -4,6 +4,8 @@ settings = require "settings-sharelatex"
 
 module.exports = RealTimeApiManager =
 	BUFFER_DELAY: 200
+
+	BUFFER_DELAY_SHORT: 10
 	
 	BUFFERED_MESSAGES: {}
 	
@@ -13,12 +15,19 @@ module.exports = RealTimeApiManager =
 		if RealTimeApiManager.BUFFERED_MESSAGES[project_id]?
 			# We already have a send scheduled, so just add more messages to it
 			RealTimeApiManager._concatMessage project_id, message
+			# Flush a short time after the input has been sent and the final status
+			if message.header?.msg_type in ["execute_input", "system_status"]
+				RealTimeApiManager._flushAfterDelay project_id, RealTimeApiManager.BUFFER_DELAY_SHORT
 		else
 			RealTimeApiManager.BUFFERED_MESSAGES[project_id] = [message]
-			setTimeout () ->
-				RealTimeApiManager._sendAndClearBufferedMessages project_id
-			, RealTimeApiManager.BUFFER_DELAY
-			
+			RealTimeApiManager._flushAfterDelay project_id
+
+	_flushAfterDelay: (project_id, delay = RealTimeApiManager.BUFFER_DELAY) ->
+		# FIXME: we should clear the existing timeout on multiple flushes
+		setTimeout () ->
+			RealTimeApiManager._sendAndClearBufferedMessages project_id
+		, delay
+
 	_concatMessage: (project_id, message) ->
 		allMessages = RealTimeApiManager.BUFFERED_MESSAGES[project_id]
 		lastMessage = allMessages[allMessages.length - 1]
@@ -47,6 +56,7 @@ module.exports = RealTimeApiManager =
 	
 	_sendAndClearBufferedMessages: (project_id) ->
 		messages = RealTimeApiManager.BUFFERED_MESSAGES[project_id]
+		return if not messages? # all messages have been sent already
 		messages = RealTimeApiManager._trimLongMessages messages
 		RealTimeApiManager.sendMessage project_id, messages, (err) ->
 			if err?
