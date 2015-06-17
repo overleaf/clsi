@@ -2,6 +2,8 @@ CompileController = require "./app/js/CompileController"
 Settings = require "settings-sharelatex"
 logger = require "logger-sharelatex"
 logger.initialize("clsi")
+if Settings.sentry?.dsn?
+	logger.initializeErrorReporting(Settings.sentry.dsn)
 smokeTest = require "smoke-test-sharelatex"
 
 Path = require "path"
@@ -38,6 +40,9 @@ app.post "/project/:project_id/request/:request_id/interrupt", CompileController
 
 app.get  "/project/:project_id/sync/code", CompileController.syncFromCode
 app.get  "/project/:project_id/sync/pdf", CompileController.syncFromPdf
+
+app.get "/oops", (req, res, next) ->
+	return next(new Error("test error"))
 
 ForbidSymlinks = require "./app/js/StaticServerForbidSymlinks"
 
