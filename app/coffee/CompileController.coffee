@@ -11,32 +11,30 @@ module.exports = CompileController =
 		RequestParser.parse req.body, (error, request) ->
 			return next(error) if error?
 			request.project_id = req.params.project_id
-			ProjectPersistenceManager.markProjectAsJustAccessed request.project_id, (error) ->
-				return next(error) if error?
-				CompileManager.doCompile request, (error, outputFiles = [], output = {}) ->
-					if error?
-						logger.error err: error, project_id: request.project_id, "error running compile"
-						if error.timedout
-							status = "timedout"
-						else
-							status = "error"
-							code = 500
+			CompileManager.doCompile request, (error, outputFiles = [], output = {}) ->
+				if error?
+					logger.error err: error, project_id: request.project_id, "error running compile"
+					if error.timedout
+						status = "timedout"
 					else
-						status = "failure"
-						for file in outputFiles
-							if file.path?.match(/output\.pdf$/)
-								status = "success"
+						status = "error"
+						code = 500
+				else
+					status = "failure"
+					for file in outputFiles
+						if file.path?.match(/output\.pdf$/)
+							status = "success"
 
-					timer.done()
-					res.send (code or 200), {
-						compile:
-							status: status
-							error:  error?.message or error
-							outputFiles: outputFiles.map (file) ->
-								url: "#{Settings.apis.clsi.url}/project/#{request.project_id}/output/#{file.path}"
-								type: file.type
-							output: output
-					}
+				timer.done()
+				res.send (code or 200), {
+					compile:
+						status: status
+						error:  error?.message or error
+						outputFiles: outputFiles.map (file) ->
+							url: "#{Settings.apis.clsi.url}/project/#{request.project_id}/output/#{file.path}"
+							type: file.type
+						output: output
+				}
 	
 	stopCompile: (req, res, next) ->
 		{project_id, session_id} = req.params

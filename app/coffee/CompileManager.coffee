@@ -3,6 +3,7 @@ LatexRunner = require "./LatexRunner"
 OutputFileFinder = require "./OutputFileFinder"
 FilesystemManager = require "./FilesystemManager"
 RealTimeApiManager = require "./RealTimeApiManager"
+ProjectPersistenceManager = require "./ProjectPersistenceManager"
 Settings = require("settings-sharelatex")
 Path = require "path"
 logger = require "logger-sharelatex"
@@ -21,57 +22,59 @@ module.exports = CompileManager =
 		timer = new Metrics.Timer("write-to-disk")
 		project_id = request.project_id
 		logger.log {project_id}, "starting compile"
-		FilesystemManager.initProject project_id, (error) ->
-			return callback(error) if error?
-			ResourceWriter.syncResourcesToDisk project_id, request.resources, (error) ->
+		ProjectPersistenceManager.markProjectAsJustAccessed project_id, (error) ->
+			return next(error) if error?
+			FilesystemManager.initProject project_id, (error) ->
 				return callback(error) if error?
-				logger.log project_id: project_id, time_taken: Date.now() - timer.start, "written files to disk"
-				timer.done()
-
-				timer = new Metrics.Timer("run-compile")
-				Metrics.inc("compiles")
-				LatexRunner.runLatex request.project_id, {
-					mainFile:  request.rootResourcePath
-					compiler:  request.compiler
-					command:   request.command
-					package:   request.package
-					env:       request.env
-					timeout:   request.timeout
-					processes: request.processes
-					memory:    request.memory
-					cpu_shares: request.cpu_shares
-				}, (error, stream) ->
+				ResourceWriter.syncResourcesToDisk project_id, request.resources, (error) ->
 					return callback(error) if error?
-			
-					streamId = "#{request.project_id}:#{request.request_id}"
-					CompileManager.INPROGRESS_STREAMS[streamId] = stream
-					
-					output =
-						stdout: ""
-						stderr: ""
-					
-					msg_id = 0
-					stream.on "data", (message) ->
-						message.header ||= {}
-						message.header.msg_id = msg_id.toString()
-						message.request_id = request.request_id
-						msg_id++
-						logger.log {message, project_id}, "got output message"
-						if message.header.msg_type == "stream"
-							output[message.content.name] += message.content.text
-						RealTimeApiManager.bufferMessageForSending project_id, message
-								
-					stream.on "error", callback
-								
-					stream.on "end", () ->
-						logger.log project_id: project_id, time_taken: Date.now() - timer.start, "done compile"
-						timer.done()
-						delete CompileManager.INPROGRESS_STREAMS[streamId]
-						OutputFileFinder.findOutputFiles project_id, request.resources, (error, outputFiles) ->
-							return callback(error) if error?
-							logger.log {outputFiles, project_id}, "got output files"
-							callback null, outputFiles, output
-	
+					logger.log project_id: project_id, time_taken: Date.now() - timer.start, "written files to disk"
+					timer.done()
+
+					timer = new Metrics.Timer("run-compile")
+					Metrics.inc("compiles")
+					LatexRunner.runLatex request.project_id, {
+						mainFile:  request.rootResourcePath
+						compiler:  request.compiler
+						command:   request.command
+						package:   request.package
+						env:       request.env
+						timeout:   request.timeout
+						processes: request.processes
+						memory:    request.memory
+						cpu_shares: request.cpu_shares
+					}, (error, stream) ->
+						return callback(error) if error?
+				
+						streamId = "#{request.project_id}:#{request.request_id}"
+						CompileManager.INPROGRESS_STREAMS[streamId] = stream
+						
+						output =
+							stdout: ""
+							stderr: ""
+						
+						msg_id = 0
+						stream.on "data", (message) ->
+							message.header ||= {}
+							message.header.msg_id = msg_id.toString()
+							message.request_id = request.request_id
+							msg_id++
+							logger.log {message, project_id}, "got output message"
+							if message.header.msg_type == "stream"
+								output[message.content.name] += message.content.text
+							RealTimeApiManager.bufferMessageForSending project_id, message
+									
+						stream.on "error", callback
+									
+						stream.on "end", () ->
+							logger.log project_id: project_id, time_taken: Date.now() - timer.start, "done compile"
+							timer.done()
+							delete CompileManager.INPROGRESS_STREAMS[streamId]
+							OutputFileFinder.findOutputFiles project_id, request.resources, (error, outputFiles) ->
+								return callback(error) if error?
+								logger.log {outputFiles, project_id}, "got output files"
+								callback null, outputFiles, output
+		
 	stopCompile: (project_id, session_id, callback = (error) ->) ->
 		streamId = "#{project_id}:#{session_id}"
 		stream = CompileManager.INPROGRESS_STREAMS[streamId]
@@ -87,21 +90,23 @@ module.exports = CompileManager =
 	
 	sendJupyterRequest: (project_id, resources, request_id, engine, msg_type, content, limits, callback = (error) ->) ->
 		logger.log {project_id, request_id, engine, msg_type, content, limits}, "sending jupyter message"
-		FilesystemManager.initProject project_id, (error) ->
-			return callback(error) if error?
-			ResourceWriter.syncResourcesToDisk project_id, resources, (error) ->
+		ProjectPersistenceManager.markProjectAsJustAccessed project_id, (error) ->
+			return next(error) if error?
+			FilesystemManager.initProject project_id, (error) ->
 				return callback(error) if error?
-				DockerRunner.sendJupyterRequest project_id, engine, msg_type, content, limits, (error, stream) ->
+				ResourceWriter.syncResourcesToDisk project_id, resources, (error) ->
 					return callback(error) if error?
-					stream_id = "#{project_id}:#{request_id}"
-					CompileManager.INPROGRESS_STREAMS[stream_id] = stream
-					stream.on "data", (message) ->
-						message.request_id = request_id
-						logger.log {message, request_id, project_id}, "got response from jupyter kernel"
-						RealTimeApiManager.bufferMessageForSending project_id, message
-					stream.on "end", () ->
-						delete CompileManager.INPROGRESS_STREAMS[stream_id]
-						callback()
+					DockerRunner.sendJupyterRequest project_id, engine, msg_type, content, limits, (error, stream) ->
+						return callback(error) if error?
+						stream_id = "#{project_id}:#{request_id}"
+						CompileManager.INPROGRESS_STREAMS[stream_id] = stream
+						stream.on "data", (message) ->
+							message.request_id = request_id
+							logger.log {message, request_id, project_id}, "got response from jupyter kernel"
+							RealTimeApiManager.bufferMessageForSending project_id, message
+						stream.on "end", () ->
+							delete CompileManager.INPROGRESS_STREAMS[stream_id]
+							callback()
 	
 	interruptJupyterRequest: (project_id, request_id, callback = (error) ->) ->
 		logger.log {project_id, request_id}, "interrupting jupyter request"

@@ -15,6 +15,7 @@ describe "CompileManager", ->
 			"./OutputFileFinder": @OutputFileFinder = {}
 			"./FilesystemManager": @FilesystemManager = {}
 			"./RealTimeApiManager": @RealTimeApiManager = {}
+			"./ProjectPersistenceManager": @ProjectPersistenceManager = {}
 			"settings-sharelatex": @Settings = { path: compilesDir: "/compiles/dir" }
 			"logger-sharelatex": @logger = { log: sinon.stub() }
 			"child_process": @child_process = {}
@@ -55,13 +56,19 @@ describe "CompileManager", ->
 			@ResourceWriter.syncResourcesToDisk = sinon.stub().callsArg(2)
 			@LatexRunner.runLatex = sinon.stub().callsArgWith(2, null, @stream)
 			@RealTimeApiManager.bufferMessageForSending = sinon.stub()
+			@ProjectPersistenceManager.markProjectAsJustAccessed = sinon.stub().callsArg(1)
 			@OutputFileFinder.findOutputFiles = sinon.stub().callsArgWith(2, null, @output_files)
 			@CompileManager.doCompile @request, @callback
 			@stream.emit "data", @message = { "mock": "message" }
 			
 			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@request_id}"].should.equal @stream
 			@stream.emit "end"
-			
+
+		it "should mark the project as accessed", ->
+			@ProjectPersistenceManager.markProjectAsJustAccessed
+				.calledWith(@project_id)
+				.should.equal true
+				
 		it "should init the project", ->
 			@FilesystemManager.initProject
 				.calledWith(@project_id)
@@ -197,6 +204,7 @@ describe "CompileManager", ->
 			@limits = {"mock": "limits"}
 			@stream = new EventEmitter()
 			@resouces = ["mock", "resources"]
+			@ProjectPersistenceManager.markProjectAsJustAccessed = sinon.stub().callsArg(1)
 			@DockerRunner.sendJupyterRequest = sinon.stub().callsArgWith(5, null, @stream)
 			@RealTimeApiManager.bufferMessageForSending = sinon.stub()
 			@FilesystemManager.initProject = sinon.stub().callsArg(1)
@@ -206,6 +214,11 @@ describe "CompileManager", ->
 			
 			@CompileManager.INPROGRESS_STREAMS["#{@project_id}:#{@request_id}"].should.exist
 			@stream.emit "end"
+
+		it "should mark the project as accessed", ->
+			@ProjectPersistenceManager.markProjectAsJustAccessed
+				.calledWith(@project_id)
+				.should.equal true
 			
 		it "should init the project", ->
 			@FilesystemManager.initProject

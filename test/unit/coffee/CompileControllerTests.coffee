@@ -46,7 +46,6 @@ describe "CompileController", ->
 			}]
 			@output = {"mock":"output"}
 			@RequestParser.parse = sinon.stub().callsArgWith(1, null, @request)
-			@ProjectPersistenceManager.markProjectAsJustAccessed = sinon.stub().callsArg(1)
 			@res.send = sinon.stub()
 
 		describe "successfully", ->
@@ -62,11 +61,6 @@ describe "CompileController", ->
 			it "should run the compile for the specified project", ->
 				@CompileManager.doCompile
 					.calledWith(@request_with_project_id)
-					.should.equal true
-
-			it "should mark the project as accessed", ->
-				@ProjectPersistenceManager.markProjectAsJustAccessed
-					.calledWith(@project_id)
 					.should.equal true
 
 			it "should return the JSON response", ->
