@@ -110,22 +110,6 @@ describe "CompileController", ->
 					)
 					.should.equal true
 
-		describe "when the request returns no output files", ->
-			beforeEach ->
-				@CompileManager.doCompile = sinon.stub().callsArgWith(1, null, [])
-				@CompileController.compile @req, @res
-		
-			it "should return the JSON response with the failure status", ->
-				@res.send
-					.calledWith(200,
-						compile:
-							error: null
-							status: "failure"
-							outputFiles: []
-							output: {}
-					)
-					.should.equal true
-
 	describe "stopCompile", ->
 		beforeEach ->
 			@CompileManager.stopCompile = sinon.stub().callsArg(2)

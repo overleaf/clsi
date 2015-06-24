@@ -20,10 +20,7 @@ module.exports = CompileController =
 						status = "error"
 						code = 500
 				else
-					status = "failure"
-					for file in outputFiles
-						if file.path?.match(/output\.pdf$/)
-							status = "success"
+					status = "success"
 
 				timer.done()
 				res.send (code or 200), {
