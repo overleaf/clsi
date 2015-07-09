@@ -87,6 +87,9 @@ module.exports = CompileManager =
 		
 		stream.emit "kill"
 		callback()
+
+	listFiles: (project_id, callback = (error, outputFiles) ->) ->
+		OutputFileFinder.findOutputFiles project_id, [], callback
 	
 	sendJupyterRequest: (project_id, resources, request_id, engine, msg_type, content, limits, callback = (error) ->) ->
 		logger.log {project_id, request_id, engine, msg_type, content, limits}, "sending jupyter message"

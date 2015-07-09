@@ -38,7 +38,19 @@ module.exports = CompileController =
 		CompileManager.stopCompile project_id, session_id, (error) ->
 			return next(error) if error?
 			res.send 204
-	
+
+	listFiles: (req, res, next) ->
+		{project_id} = req.params
+		CompileManager.listFiles project_id, (error, outputFiles) ->
+			if error?
+				code = 500
+			res.send (code or 200), {
+				outputFiles: outputFiles.map (file) ->
+							url: "#{Settings.apis.clsi.url}/project/#{project_id}/output/#{file.path}"
+							name: "#{file.path}"
+							type: file.type
+			}
+
 	sendJupyterRequest: (req, res, next) ->
 		{project_id} = req.params
 		{request_id, msg_type, content, limits, engine, resources} = req.body
