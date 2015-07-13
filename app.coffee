@@ -38,6 +38,7 @@ app.delete "/project/:project_id", CompileController.clearCache
 app.post "/project/:project_id/request", bodyParser.json(limit: "5mb"), CompileController.sendJupyterRequest
 app.post "/project/:project_id/request/:request_id/interrupt", CompileController.interruptJupyterRequest
 
+app.del "/project/:project_id/output/:file", CompileController.deleteFile
 app.get "/project/:project_id/output", CompileController.listFiles
 
 app.get  "/project/:project_id/sync/code", CompileController.syncFromCode

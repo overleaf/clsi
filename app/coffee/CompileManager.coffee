@@ -90,7 +90,14 @@ module.exports = CompileManager =
 
 	listFiles: (project_id, callback = (error, outputFiles) ->) ->
 		OutputFileFinder.findOutputFiles project_id, [], callback
-	
+
+	deleteFile: (project_id, file, callback = (error) ->) ->
+		cmd = ['/bin/rm', '-f', file]
+		DockerRunner.run project_id, cmd, {}, {}, (error, stream) ->
+			return callback(error) if error?
+			stream.on "end", () ->
+				callback()
+
 	sendJupyterRequest: (project_id, resources, request_id, engine, msg_type, content, limits, callback = (error) ->) ->
 		logger.log {project_id, request_id, engine, msg_type, content, limits}, "sending jupyter message"
 		ProjectPersistenceManager.markProjectAsJustAccessed project_id, (error) ->

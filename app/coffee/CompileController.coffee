@@ -51,6 +51,12 @@ module.exports = CompileController =
 							type: file.type
 			}
 
+	deleteFile: (req, res, next) ->
+		{project_id, file} = req.params
+		CompileManager.deleteFile project_id, file, (error) ->
+			return next(error) if error?
+			res.send 204
+
 	sendJupyterRequest: (req, res, next) ->
 		{project_id} = req.params
 		{request_id, msg_type, content, limits, engine, resources} = req.body
