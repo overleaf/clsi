@@ -9,6 +9,7 @@ Metrics = require "./Metrics"
 child_process = require "child_process"
 CommandRunner = require(Settings.clsi?.commandRunner or "./CommandRunner")
 fs = require("fs")
+Errors = require "./Errors"
 
 module.exports = CompileManager =
 	doCompile: (request, callback = (error, outputFiles) ->) ->
@@ -118,10 +119,14 @@ module.exports = CompileManager =
 		directory = Path.join(Settings.path.compilesDir, project_id)
 		timeout = 10 * 1000
 
-		CommandRunner.run project_id, command, directory, timeout, (error) ->
-			return callback(error) if error?
-			stdout = fs.readFileSync(directory + "/" + file_name + ".wc", "utf-8")
-			callback null, CompileManager._parseWordcountFromOutput(stdout)
+		if fs.existsSync(directory + "/" + file_name)
+			CommandRunner.run project_id, command, directory, timeout, (error) ->
+				return callback(error) if error?
+				stdout = fs.readFileSync(directory + "/" + file_name + ".wc", "utf-8")
+				callback null, CompileManager._parseWordcountFromOutput(stdout)
+		else
+			callback new Errors.NotFoundError("File not found #{project_id}/#{file_name}")
+
 
 	_parseWordcountFromOutput: (output) ->
 		results = {

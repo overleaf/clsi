@@ -5,17 +5,19 @@ expect = require("chai").expect
 path = require("path")
 fs = require("fs")
 
-describe "Syncing", ->
-	before (done) ->
-		@request =
-			resources: [
-				path: "main.tex"
-				content: fs.readFileSync(path.join(__dirname,"../fixtures/naugty_strings.txt"),"utf-8")
-			]
-		@project_id = Client.randomId()
-		Client.compile @project_id, @request, (@error, @res, @body) => done()
+describe "Wordcount", ->
 
-	describe "wordcount file", ->
+	describe "when file exist", ->
+
+		before (done) ->
+			@request =
+				resources: [
+					path: "main.tex"
+					content: fs.readFileSync(path.join(__dirname,"../fixtures/naugty_strings.txt"),"utf-8")
+				]
+			@project_id = Client.randomId()
+			Client.compile @project_id, @request, (@error, @res, @body) => done()
+
 		it "should return wordcount info", (done) ->
 			Client.wordcount @project_id, "main.tex", (error, result) ->
 				throw error if error?
@@ -32,3 +34,11 @@ describe "Syncing", ->
 					}
 				)
 				done()
+
+	describe "when file not exist", ->
+
+		it "should return error", (done) ->
+			@project_id = Client.randomId()
+			Client.wordcount @project_id, "nofile.tex", (error, result) ->
+				should.exist error
+			done()

@@ -179,6 +179,7 @@ describe "CompileManager", ->
 		beforeEach ->
 			@CommandRunner.run = sinon.stub().callsArg(4)
 			@fs.readFileSync = sinon.stub().returns @stdout = "Encoding: ascii\nWords in text: 2"
+			@fs.existsSync = sinon.stub().returns true
 			@callback  = sinon.stub()
 
 			@project_id = "project-id-123"
