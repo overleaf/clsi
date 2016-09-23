@@ -5,16 +5,16 @@ module.exports =
 	# See http://sequelizejs.com/documentation#usage-options for details
 	mysql:
 		clsi:
-			database: "clsi"
-			username: "clsi"
-			password: null
+			database: process.env.CLSI_DB_DATABASE || "clsi"
+			username: process.env.CLSI_DB_USER ||"clsi"
+			password: process.env.CLSI_DB_PASSWORD || null
 			dialect: "sqlite"
-			storage: Path.resolve(__dirname + "/../db.sqlite")
+			storage: process.env.CLSI_DB_STORAGE || Path.resolve(__dirname + "/../db.sqlite")
 
 	path:
-		compilesDir:  Path.resolve(__dirname + "/../compiles")
-		clsiCacheDir: Path.resolve(__dirname + "/../cache")
-		synctexBaseDir: (project_id) -> Path.join(@compilesDir, project_id)
+		compilesDir:  process.env.CLSI_PATH_COMPILES_DIR || Path.resolve(__dirname + "/../compiles")
+		clsiCacheDir: process.env.CLSI_PATH_CLSI_CACHE_DIR || Path.resolve(__dirname + "/../cache")
+		synctexBaseDir: process.env.CLSI_PATH_SYNCTEX_BASE_DIR || (project_id) -> Path.join(@compilesDir, project_id)
 
 	# clsi:
 	# 	strace: true
@@ -34,15 +34,15 @@ module.exports =
 
 	internal:
 		clsi:
-			port: 3013
-			load_port: 3044
-			host: "localhost"
+			port: process.env.CLSI_INTERNAL_PORT || 3013
+			load_port: process.env.CLSI_INTERNAL_LOAD_PORT || 3044
+			host: process.env.CLSI_INTERNAL_HOST || "localhost"
 
 	
 	apis:
 		clsi:
-			url: "http://localhost:3013"
+			url: process.env.CLSI_APIS_URL || "http://localhost:3013"
 			
-	smokeTest: false
-	project_cache_length_ms: 1000 * 60 * 60 * 24
-	parallelFileDownloads:1
+	smokeTest: process.env.CLSI_SMOKE_TEST == "true"
+	project_cache_length_ms: process.env.CLSI_CACHE_LENGHT_MS || 1000 * 60 * 60 * 24
+	parallelFileDownloads: process.env.CLSI_CACHE_LENGHT_MS || 1
