@@ -1,4 +1,5 @@
 CompileController = require "./app/js/CompileController"
+
 Settings = require "settings-sharelatex"
 logger = require "logger-sharelatex"
 logger.initialize("clsi")
