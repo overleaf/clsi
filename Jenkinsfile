@@ -34,7 +34,7 @@ pipeline {
     }
     stage('Install Docker Runner') {
       steps {
-        npm install 'git+ssh://git@github.com:sharelatex/docker-runner-sharelatex.git'
+        sh 'npm install "git+ssh://git@github.com:sharelatex/docker-runner-sharelatex.git"'
       }
     }
     stage('Compile') {
