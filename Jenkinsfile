@@ -26,15 +26,12 @@ pipeline {
     }
     stage('Install') {
       steps {
+        checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: '_docker-runner'], [$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[credentialsId: 'GIT_DEPLOY_KEY', url: 'git@github.com:sharelatex/docker-runner-sharelatex']]])
         sh 'rm -fr node_modules'
+        sh 'npm install ./_docker-runner'
         sh 'npm install'
         sh 'npm rebuild'
         sh 'npm install --quiet grunt-cli'
-      }
-    }
-    stage('Install Docker Runner') {
-      steps {
-        sh 'npm install "git+ssh://git@github.com:sharelatex/docker-runner-sharelatex.git"'
       }
     }
     stage('Compile') {
