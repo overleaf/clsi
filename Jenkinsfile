@@ -43,7 +43,7 @@ pipeline {
     stage('Acceptance Tests') {
       agent {
         docker {
-          image 'node:4.2.1'
+          image 'sharelatex/acceptance-test-runner'
           reuseNode true
         }
       }
