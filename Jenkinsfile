@@ -45,9 +45,9 @@ pipeline {
         TEXLIVE_IMAGE="quay.io/sharelatex/texlive-full:2017.1"
       }
       steps {
-        sh 'docker pull ${env.TEXLIVE_IMAGE}'
+        sh 'docker pull $TEXLIVE_IMAGE'
         sh 'docker pull sharelatex/acceptance-test-runner'
-        sh 'docker run --rm -e TEXLIVE_IMAGE=${env.TEXLIVE_IMAGE} -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner'
+        sh 'docker run --rm -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner'
       }
     }
     stage('Package') {
