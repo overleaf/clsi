@@ -24,7 +24,7 @@ pipeline {
         sh 'rm -fr ./_docker-runner'
         sh 'npm install'
         sh 'npm rebuild'
-        sh 'npm install --quiet grunt-cli'
+        sh 'npm install --quiet grunt-cli sqlite3'
       }
     }
     stage('Compile and Test') {
