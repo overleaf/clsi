@@ -43,13 +43,15 @@ pipeline {
     stage('Acceptance Tests') {
       environment {
         TEXLIVE_IMAGE="quay.io/sharelatex/texlive-full:2017.1"
+        SANDBOXED_COMPILES_SIBLING_CONTAINERS="true"
+        SANDBOXED_COMPILES_HOST_DIR="${workspace}/compiles"
       }
       steps {
         sh 'mkdir -p compiles cache'
         // Not yet running, due to volumes/sibling containers
-        //sh 'docker pull $TEXLIVE_IMAGE'
-        //sh 'docker pull sharelatex/acceptance-test-runner'
-        //sh 'docker run --rm -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner'
+        sh 'docker pull $TEXLIVE_IMAGE'
+        sh 'docker pull sharelatex/acceptance-test-runner'
+        sh 'docker run --rm -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner'
       }
     }
     stage('Package') {
