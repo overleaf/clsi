@@ -16,6 +16,7 @@ module.exports =
 		clsiCacheDir: Path.resolve(__dirname + "/../../../cache")
 		#synctexBaseDir: (project_id) -> Path.join(@compilesDir, project_id)
 		synctexBaseDir: () -> "/compile"
+		sandboxedCompilesHostDir: process.env['SANDBOXED_COMPILES_HOST_DIR']
 
 	clsi:
 		#strace: true
