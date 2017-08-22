@@ -49,7 +49,7 @@ pipeline {
         // Not yet running, due to volumes/sibling containers
         sh 'docker pull $TEXLIVE_IMAGE'
         sh 'docker pull sharelatex/acceptance-test-runner'
-        sh 'docker run --rm -e SANDBOXED_COMPILES_HOST_DIR=$(pwd)/compiles -e SANDBOXED_COMPILES_SIBLING_CONTAINERS=true -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner'
+        sh 'docker run --rm -u 111:119 -e SANDBOXED_COMPILES_HOST_DIR=$(pwd)/compiles -e SANDBOXED_COMPILES_SIBLING_CONTAINERS=true -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner'
       }
     }
     stage('Package') {
