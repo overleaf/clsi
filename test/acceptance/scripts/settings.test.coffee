@@ -30,7 +30,7 @@ module.exports =
 				HOME: "/tmp"
 			modem:
 				socketPath: false
-			user: "111"
+			user: process.env.SIBLING_CONTAINER_USER ||"111"
 
 	internal:
 		clsi:
