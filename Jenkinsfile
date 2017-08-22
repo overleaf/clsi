@@ -49,7 +49,7 @@ pipeline {
         // Not yet running, due to volumes/sibling containers
         sh 'docker pull $TEXLIVE_IMAGE'
         sh 'docker pull sharelatex/acceptance-test-runner:clsi-4.2.1'
-        sh 'docker run --rm -e SIBLING_CONTAINER_USER=root -e SANDBOXED_COMPILES_HOST_DIR=$(pwd)/compiles -e SANDBOXED_COMPILES_SIBLING_CONTAINERS=true -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner:clsi-0.10'
+        sh 'docker run --rm -e SIBLING_CONTAINER_USER=root -e SANDBOXED_COMPILES_HOST_DIR=$(pwd)/compiles -e SANDBOXED_COMPILES_SIBLING_CONTAINERS=true -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner:clsi-4.2.1'
       }
     }
     stage('Package') {
