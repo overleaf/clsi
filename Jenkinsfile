@@ -11,7 +11,7 @@ pipeline {
     stage('Install') {
       agent {
         docker {
-          image 'sharelatex/node:0.10.22'
+          image 'node:4.2.1'
           args "-v /var/lib/jenkins/.npm:/tmp/.npm -e HOME=/tmp"
           reuseNode true
         }
@@ -30,7 +30,7 @@ pipeline {
     stage('Compile and Test') {
       agent {
         docker {
-          image 'sharelatex/node:0.10.22'
+          image 'node:4.2.1'
           reuseNode true
         }
       }
@@ -48,7 +48,7 @@ pipeline {
         sh 'mkdir -p compiles'
         // Not yet running, due to volumes/sibling containers
         sh 'docker pull $TEXLIVE_IMAGE'
-        sh 'docker pull sharelatex/acceptance-test-runner:clsi-0.10'
+        sh 'docker pull sharelatex/acceptance-test-runner:clsi-4.2.1'
         sh 'docker run --rm -e SIBLING_CONTAINER_USER=root -e SANDBOXED_COMPILES_HOST_DIR=$(pwd)/compiles -e SANDBOXED_COMPILES_SIBLING_CONTAINERS=true -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner:clsi-0.10'
       }
     }
