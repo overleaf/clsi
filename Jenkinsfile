@@ -8,6 +8,12 @@ pipeline {
   }
 
   stages {
+    stage('Clean') {
+      steps {
+        // This is a terrible hack to set the file ownership to jenkins:jenkins so we can cleanup the directory
+        sh 'docker run -v $(pwd):/app --rm busybox /bin/chown -R 111:119 /app'
+      }
+    }
     stage('Install') {
       agent {
         docker {
@@ -17,9 +23,6 @@ pipeline {
         }
       }
       steps {
-        // This is a terrible hack to set the file ownership to jenkins:jenkins so we can cleanup the directory
-        sh 'docker run -v $(pwd):/app --rm busybox /bin/chown -R 111:119 /app'
-        
         sh 'git config --global core.logallrefupdates false'
         sh 'rm -fr node_modules'
         checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'node_modules/docker-runner-sharelatex'], [$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[credentialsId: 'GIT_DEPLOY_KEY', url: 'git@github.com:sharelatex/docker-runner-sharelatex']]])
