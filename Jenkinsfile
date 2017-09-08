@@ -25,7 +25,9 @@ pipeline {
       steps {
         sh 'git config --global core.logallrefupdates false'
         sh 'rm -fr node_modules'
-        checkout([$class: 'GitSCM', branches: [[name: '*/jg-error-logging']], extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'node_modules/docker-runner-sharelatex'], [$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[credentialsId: 'GIT_DEPLOY_KEY', url: 'git@github.com:sharelatex/docker-runner-sharelatex']]])
+        checkout([$class: 'GitSCM', branches: [[name: '*/jg-error-logging']], extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: '_docker-runner'], [$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[credentialsId: 'GIT_DEPLOY_KEY', url: 'git@github.com:sharelatex/docker-runner-sharelatex']]])
+        sh 'npm install ./_docker-runner'
+        sh 'rm -fr ./_docker-runner'
         sh 'npm install'
         sh 'npm rebuild'
         sh 'npm install --quiet grunt-cli sqlite3'
