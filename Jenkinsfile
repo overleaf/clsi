@@ -27,7 +27,7 @@ pipeline {
         sh 'rm -fr node_modules'
         checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: '_docker-runner'], [$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[credentialsId: 'GIT_DEPLOY_KEY', url: 'git@github.com:sharelatex/docker-runner-sharelatex']]])
         sh 'npm install ./_docker-runner'
-        sh 'rm -fr ./_docker-runner'
+        sh 'rm -fr ./_docker-runner ./_docker-runner@tmp'
         sh 'npm install'
         sh 'npm rebuild'
         sh 'npm install --quiet grunt-cli'
@@ -57,6 +57,9 @@ pipeline {
         sh 'docker pull $TEXLIVE_IMAGE'
         sh 'docker pull sharelatex/acceptance-test-runner:clsi-4.2.1'
         sh 'docker run --rm -e SIBLING_CONTAINER_USER=root -e SANDBOXED_COMPILES_HOST_DIR=$(pwd)/compiles -e SANDBOXED_COMPILES_SIBLING_CONTAINERS=true -e TEXLIVE_IMAGE=$TEXLIVE_IMAGE -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/app sharelatex/acceptance-test-runner:clsi-4.2.1'
+        // This is a terrible hack to set the file ownership to jenkins:jenkins so we can cleanup the directory
+        sh 'docker run -v $(pwd):/app --rm busybox /bin/chown -R 111:119 /app'
+        sh 'rm server.log db.sqlite config/settings.defaults.coffee'
       }
     }
     stage('Package') {
