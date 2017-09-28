@@ -12,6 +12,7 @@ pipeline {
       steps {
         // This is a terrible hack to set the file ownership to jenkins:jenkins so we can cleanup the directory
         sh 'docker run -v $(pwd):/app --rm busybox /bin/chown -R 111:119 /app'
+        sh 'rm -fr node_modules'
       }
     }
     stage('Install') {
@@ -30,7 +31,7 @@ pipeline {
         sh 'rm -fr ./_docker-runner ./_docker-runner@tmp'
         sh 'npm install'
         // sh 'npm rebuild'
-        sh 'npm install --quiet -g grunt-cli'
+        sh 'npm install --quiet grunt-cli'
       }
     }
     stage('Compile and Test') {
