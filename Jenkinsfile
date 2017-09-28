@@ -18,7 +18,7 @@ pipeline {
     stage('Install') {
       agent {
         docker {
-          image 'node:6.11.2'
+          image 'node:4.2.1'
           args "-e HOME=/tmp"
           reuseNode true
         }
@@ -37,7 +37,7 @@ pipeline {
     stage('Compile and Test') {
       agent {
         docker {
-          image 'node:6.11.2'
+          image 'node:4.2.1'
           reuseNode true
         }
       }
