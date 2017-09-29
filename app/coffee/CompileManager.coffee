@@ -62,10 +62,7 @@ module.exports = CompileManager =
 					callback()
 
 			createTikzFileIfRequired = (callback) ->
-				if TikzManager.needsOutputFile(request.rootResourcePath, resourceList)
-					TikzManager.injectOutputFile compileDir, request.rootResourcePath, callback
-				else
-					callback()
+				TikzManager.createTikzFileIfRequired compileDir, request.rootResourcePath, resourceList, callback
 
 			# set up environment variables for chktex
 			env = {}
