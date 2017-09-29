@@ -24,7 +24,9 @@ module.exports = ResourceWriter =
 						return callback(error) if error?
 						ResourceWriter.saveIncrementalResourcesToDisk request.project_id, request.resources, basePath, (error) ->
 							return callback(error) if error?
-							callback(null, resourceList)
+							ResourceWriter.includeResourceContent request.resources, resourceList, (error, resources) ->
+								return callback(error) if error?
+								callback(null, resources)
 		else
 			logger.log project_id: request.project_id, user_id: request.user_id, "full sync"
 			@saveAllResourcesToDisk request.project_id, request.resources, basePath, (error) ->
@@ -78,6 +80,8 @@ module.exports = ResourceWriter =
 					should_delete = true
 					if path.match(/^output\./) or path.match(/\.aux$/) or path.match(/^cache\//) # knitr cache
 						should_delete = false
+					if path.match(/^output-.*/) # Tikz cached figures
+						should_delete = false
 					if path == "output.pdf" or path == "output.dvi" or path == "output.log" or path == "output.xdv"
 						should_delete = true
 					if path == "output.tex" # created by TikzManager if present in output files
@@ -126,3 +130,10 @@ module.exports = ResourceWriter =
 			return callback new Error("resource path is outside root directory")
 		else
 			return callback(null, path)
+
+	includeResourceContent: (requestResources = [], cachedResources = [], callback = (error, resources) ->) ->
+		inRequest = {}
+		for resource in requestResources
+			inRequest[resource.path] = true
+		cachedResources = (resource for resource in cachedResources when !inRequest[resource.path])
+		callback null, [requestResources..., cachedResources...]
