@@ -19,6 +19,7 @@ describe "Running a compile", ->
 						content: """
 							\\documentclass{article}
 							\\begin{document}
+							\\immediate\\write18{/bin/bash -e sleep 1}
 							Hello world
 							\\end{document}
 						"""
