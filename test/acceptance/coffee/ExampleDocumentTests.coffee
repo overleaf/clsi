@@ -3,6 +3,7 @@ request = require "request"
 require("chai").should()
 fs = require "fs"
 ChildProcess = require "child_process"
+ClsiApp = require "./helpers/ClsiApp"
 
 fixturePath = (path) -> __dirname + "/../fixtures/" + path
 
@@ -11,7 +12,8 @@ try
 catch e
 
 convertToPng = (pdfPath, pngPath, callback = (error) ->) ->
-	convert = ChildProcess.exec "convert #{fixturePath(pdfPath)} #{fixturePath(pngPath)}"
+	command = "convert #{fixturePath(pdfPath)} #{fixturePath(pngPath)}"
+	convert = ChildProcess.exec command
 	stdout = ""
 	convert.stdout.on "data", (chunk) -> console.log "STDOUT", chunk.toString()
 	convert.stderr.on "data", (chunk) -> console.log "STDERR", chunk.toString()
@@ -40,7 +42,6 @@ checkPdfInfo = (pdfPath, callback = (error, output) ->) ->
 		if stdout.match(/Optimized:\s+yes/)
 			callback null, true
 		else
-			console.log "pdfinfo result", stdout
 			callback null, false
 
 compareMultiplePages = (project_id, callback = (error) ->) ->
@@ -85,7 +86,9 @@ Client.runServer(4242, fixturePath("examples"))
 
 describe "Example Documents", ->
 	before (done) ->
-		ChildProcess.exec("rm test/acceptance/fixtures/tmp/*").on "exit", () -> done()
+		ChildProcess.exec("rm test/acceptance/fixtures/tmp/*").on "exit", () -> 
+			ClsiApp.ensureRunning done
+
 
 	for example_dir in fs.readdirSync fixturePath("examples")
 		do (example_dir) ->

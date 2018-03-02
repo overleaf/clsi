@@ -132,12 +132,17 @@ resCacher =
 if Settings.smokeTest
 	do runSmokeTest = ->
 		logger.log("running smoke tests")
+		console.log(__dirname, __filename)
 		smokeTest.run(require.resolve(__dirname + "/test/smoke/js/SmokeTests.js"))({}, resCacher)
 		setTimeout(runSmokeTest, 30 * 1000)
 
 app.get "/health_check", (req, res)->
 	res.contentType(resCacher?.setContentType)
 	res.status(resCacher?.code).send(resCacher?.body)
+
+app.get "/smoke_test_force", (req, res)->
+	smokeTest.run(require.resolve(__dirname + "/test/smoke/js/SmokeTests.js"))(req, res)
+
 
 profiler = require "v8-profiler"
 app.get "/profile", (req, res) ->
@@ -160,8 +165,16 @@ app.use (error, req, res, next) ->
 		logger.error {err: error, url: req.url}, "server error"
 		res.sendStatus(error?.statusCode || 500)
 
-app.listen port = (Settings.internal?.clsi?.port or 3013), host = (Settings.internal?.clsi?.host or "localhost"), (error) ->
-	logger.info "CLSI starting up, listening on #{host}:#{port}"
+port = (Settings.internal?.clsi?.port or 3013)
+host = (Settings.internal?.clsi?.host or "localhost")
+
+if !module.parent # Called directly
+	app.listen port, host, (error) ->
+		logger.info "CLSI starting up, listening on #{host}:#{port}"
+
+module.exports = app
+
+
 
 setInterval () ->
 	ProjectPersistenceManager.clearExpiredProjects()

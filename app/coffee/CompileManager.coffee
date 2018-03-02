@@ -41,7 +41,6 @@ module.exports = CompileManager =
 
 	doCompile: (request, callback = (error, outputFiles) ->) ->
 		compileDir = getCompileDir(request.project_id, request.user_id)
-
 		timer = new Metrics.Timer("write-to-disk")
 		logger.log project_id: request.project_id, user_id: request.user_id, "syncing resources to disk"
 		ResourceWriter.syncResourcesToDisk request, compileDir, (error, resourceList) ->
@@ -205,18 +204,24 @@ module.exports = CompileManager =
 		base_dir = Settings.path.synctexBaseDir(compileName)
 		file_path = base_dir + "/" + file_name
 		compileDir = getCompileDir(project_id, user_id)
-		synctex_path = Path.join(compileDir, "output.pdf")
-		CompileManager._runSynctex ["code", synctex_path, file_path, line, column], (error, stdout) ->
+		synctex_path =  "#{base_dir}/output.pdf"
+		command = ["code", synctex_path, file_path, line, column]
+		CompileManager._runSynctex project_id, user_id, command, (error, stdout) ->
 			return callback(error) if error?
-			logger.log project_id: project_id, user_id:user_id, file_name: file_name, line: line, column: column, stdout: stdout, "synctex code output"
+			if stdout.toLowerCase().indexOf("warning") == -1
+				logType = "log"
+			else
+				logType = "err"
+			logger[logType] project_id: project_id, user_id:user_id, file_name: file_name, line: line, column: column, command:command, stdout: stdout, "synctex code output"
 			callback null, CompileManager._parseSynctexFromCodeOutput(stdout)
 
 	syncFromPdf: (project_id, user_id, page, h, v, callback = (error, filePositions) ->) ->
 		compileName = getCompileName(project_id, user_id)
-		base_dir = Settings.path.synctexBaseDir(compileName)
 		compileDir = getCompileDir(project_id, user_id)
-		synctex_path = Path.join(compileDir, "output.pdf")
-		CompileManager._runSynctex ["pdf", synctex_path, page, h, v], (error, stdout) ->
+		base_dir = Settings.path.synctexBaseDir(compileName)
+		synctex_path =  "#{base_dir}/output.pdf"
+		command = ["pdf", synctex_path, page, h, v]
+		CompileManager._runSynctex  project_id, user_id, command, (error, stdout) ->
 			return callback(error) if error?
 			logger.log project_id: project_id, user_id:user_id, page: page, h: h, v:v, stdout: stdout, "synctex pdf output"
 			callback null, CompileManager._parseSynctexFromPdfOutput(stdout, base_dir)
@@ -235,19 +240,19 @@ module.exports = CompileManager =
 				return callback(new Error("not a file")) if not stats?.isFile()
 				callback()
 
-	_runSynctex: (args, callback = (error, stdout) ->) ->
-		bin_path = Path.resolve(__dirname + "/../../bin/synctex")
+	_runSynctex: (project_id, user_id, command, callback = (error, stdout) ->) ->
 		seconds = 1000
-		outputFilePath = args[1]
-		CompileManager._checkFileExists outputFilePath, (error) ->
-			return callback(error) if error?
-			if Settings.clsi?.synctexCommandWrapper?
-				[bin_path, args] = Settings.clsi?.synctexCommandWrapper bin_path, args
-			child_process.execFile bin_path, args, timeout: 10 * seconds, (error, stdout, stderr) ->
-				if error?
-					logger.err err:error, args:args, "error running synctex"
-					return callback(error)
-				callback(null, stdout)
+
+		command.unshift("/opt/synctex")
+
+		directory = getCompileDir(project_id, user_id)
+		timeout = 10 * 1000
+		compileName = getCompileName(project_id, user_id)
+		CommandRunner.run compileName, command, directory, Settings.clsi.docker.image, timeout, {}, (error, output) ->
+			if error?
+				logger.err err:error, command:command, "error running synctex"
+				return callback(error)
+			callback(null, output.stdout)
 
 	_parseSynctexFromCodeOutput: (output) ->
 		results = []

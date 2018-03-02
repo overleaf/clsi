@@ -11,6 +11,7 @@ module.exports = Client =
 		Math.random().toString(16).slice(2)
 
 	compile: (project_id, data, callback = (error, res, body) ->) ->
+		console.log("#{@host}/project/#{project_id}/compile")
 		request.post {
 			url: "#{@host}/project/#{project_id}/compile"
 			json:
@@ -30,6 +31,7 @@ module.exports = Client =
 		express = require("express")
 		app = express()
 		app.use express.static(directory)
+		console.log("starting test server on", port, host)
 		app.listen(port, host).on "error", (error) ->
 			console.error "error starting server:", error.message
 			process.exit(1)

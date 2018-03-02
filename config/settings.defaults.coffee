@@ -21,10 +21,9 @@ module.exports =
 			port: 3013
 			host: process.env["LISTEN_ADDRESS"] or "localhost"
 
-	
 	apis:
 		clsi:
-			url: "http://localhost:3013"
+			url: "http://#{process.env['CLSI_HOST'] or 'localhost'}:3013"
 			
 	smokeTest: false
 	project_cache_length_ms: 1000 * 60 * 60 * 24
@@ -41,4 +40,10 @@ if process.env["COMMAND_RUNNER"]
 			user: process.env["TEXLIVE_IMAGE_USER"] or "tex"
 		expireProjectAfterIdleMs: 24 * 60 * 60 * 1000
 		checkProjectsIntervalMs: 10 * 60 * 1000
+
+	module.exports.path.synctexBaseDir = -> "/compile"	
+	
 	module.exports.path.sandboxedCompilesHostDir = process.env["COMPILES_HOST_DIR"]
+
+	#TODO this can be deleted once module is merged in
+	module.exports.path.synctexBinHostPath = process.env["SYNCTEX_BIN_HOST_PATH"]
