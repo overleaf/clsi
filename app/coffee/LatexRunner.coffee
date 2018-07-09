@@ -16,7 +16,7 @@ module.exports = LatexRunner =
 
 		# We want to run latexmk on the tex file which we will automatically
 		# generate from the Rtex/Rmd/md file.
-		mainFile = mainFile.replace(/\.(Rtex|md|Rmd)$/, ".tex")
+		mainFile = mainFile.replace(/\.(Rtex|md|Rmd)$/, ".md")
 
 		if compiler == "pdflatex"
 			command = LatexRunner._pdflatexCommand mainFile
@@ -31,6 +31,12 @@ module.exports = LatexRunner =
 		
 		if Settings.clsi?.strace
 			command = ["strace", "-o", "strace", "-ff"].concat(command)
+
+		# ignore the above and make a pandoc command
+		console.log(mainFile)
+		console.log(image)
+		image = "ivotron/pandoc"
+		command = "pandoc -o $COMPILE_DIR/output.html $mainFile"
 
 		id = "#{project_id}" # record running project under this id
 
