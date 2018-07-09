@@ -36,7 +36,7 @@ module.exports = LatexRunner =
 		console.log(mainFile)
 		console.log(image)
 		image = "ivotron/pandoc"
-		command = "pandoc -o $COMPILE_DIR/output.html $mainFile"
+		command = ["pandoc -o $COMPILE_DIR/output.html $mainFile"]
 
 		id = "#{project_id}" # record running project under this id
 
