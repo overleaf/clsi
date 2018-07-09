@@ -39,6 +39,8 @@ module.exports = CompileController =
 						for file in outputFiles
 							if file.path?.match(/output\.pdf$/)
 								status = "success"
+							if file.path?.match(/output\.html$/)
+								status = "success"
 						# log an error if any core files are found
 						for file in outputFiles
 							if file.path is "core"
@@ -48,7 +50,7 @@ module.exports = CompileController =
 					res.status(code or 200).send {
 						compile:
 							status: status
-							error:  error?.message or error
+							error:	error?.message or error
 							outputFiles: outputFiles.map (file) ->
 								url:
 									"#{Settings.apis.clsi.url}/project/#{request.project_id}" +
