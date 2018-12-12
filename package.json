@@ -40,7 +40,7 @@
     "smoke-test-sharelatex": "git+https://github.com/sharelatex/smoke-test-sharelatex.git#v0.2.0",
     "sqlite3": "^4.0.2",
     "underscore": "^1.8.2",
-    "v8-profiler": "^5.2.4",
+    "v8-profiler-node8": "^6.0.1",
     "wrench": "~1.5.4"
   },
   "devDependencies": {
