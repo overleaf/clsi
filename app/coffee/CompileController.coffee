@@ -16,6 +16,8 @@ module.exports = CompileController =
 			ProjectPersistenceManager.markProjectAsJustAccessed request.project_id, (error) ->
 				return next(error) if error?
 				CompileManager.doCompileWithLock request, (error, outputFiles = []) ->
+					unless outputFiles
+						outputFiles = []
 					if error instanceof Errors.AlreadyCompilingError
 						code = 423 # Http 423 Locked
 						status = "compile-in-progress"
