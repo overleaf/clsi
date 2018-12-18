@@ -84,7 +84,7 @@ describe "CompileController", ->
 			
 		describe "with an error", ->
 			beforeEach ->
-				@CompileManager.doCompileWithLock = sinon.stub().callsArgWith(1, new Error(@message = "error message"))
+				@CompileManager.doCompileWithLock = sinon.stub().callsArgWith(1, new Error(@message = "error message"), null)
 				@CompileController.compile @req, @res
 		
 			it "should return the JSON response with the error", ->
@@ -102,7 +102,7 @@ describe "CompileController", ->
 			beforeEach ->
 				@error = new Error(@message = "container timed out")
 				@error.timedout = true
-				@CompileManager.doCompileWithLock = sinon.stub().callsArgWith(1, @error)
+				@CompileManager.doCompileWithLock = sinon.stub().callsArgWith(1, @error, null)
 				@CompileController.compile @req, @res
 		
 			it "should return the JSON response with the timeout status", ->
