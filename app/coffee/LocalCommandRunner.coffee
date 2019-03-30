@@ -19,6 +19,7 @@ module.exports = CommandRunner =
 		# run command as detached process so it has its own process group (which can be killed if needed)
 		proc = spawn command[0], command.slice(1), stdio: ["inherit", "pipe", "pipe"], cwd: directory, detached: true, env: env
 
+		# places for the output pipes to connect to
 		proc.stdout.setEncoding 'utf8'
 		proc.stdout.on 'data', (data) ->
 			console.log data
