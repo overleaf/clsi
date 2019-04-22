@@ -120,8 +120,19 @@ module.exports = DockerRunner =
 		for hostVol, dockerVol of volumes
 			dockerVolumes[dockerVol] = {}
 
-			if volumes[hostVol].slice(-3).indexOf(":r") == -1
-				volumes[hostVol] = "#{dockerVol}:rw"
+			[target, flags] = volumes[hostVol].split ":"
+			if flags?
+				flags = flags.split ","
+			else
+				flags = []
+
+			if "ro" not in flags and "rw" not in flags
+				flags.unshift "rw"
+
+			if "Z" not in flags and "z" not in flags
+				flags.push "z"
+
+			volumes[hostVol] = "#{target}:#{flags.join ","}"
 
 		# merge settings and environment parameter
 		env = {}
@@ -151,7 +162,7 @@ module.exports = DockerRunner =
 		
 
 		if Settings.path?.synctexBinHostPath?
-			options["HostConfig"]["Binds"].push("#{Settings.path.synctexBinHostPath}:/opt/synctex:ro")
+			options["HostConfig"]["Binds"].push("#{Settings.path.synctexBinHostPath}:/opt/synctex:ro,z")
 
 		if Settings.clsi.docker.seccomp_profile?
 			options.HostConfig.SecurityOpt.push "seccomp=#{Settings.clsi.docker.seccomp_profile}"
