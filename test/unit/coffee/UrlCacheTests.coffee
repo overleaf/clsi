@@ -130,7 +130,11 @@ describe "UrlCache", ->
 			@destPath = "path/to/destination"
 			@UrlCache._copyFile = sinon.stub().callsArg(2)
 			@UrlCache._ensureUrlIsInCache = sinon.stub().callsArgWith(3, null, @cachePath)
+			@UrlCache._ensureCacheDirExists = sinon.stub().callsArg(0)
 			@UrlCache.downloadUrlToFile(@project_id, @url, @destPath, @lastModified, @callback)
+
+		it "should ensure that the cache exists", ->
+			sinon.assert.called(@UrlCache._ensureCacheDirExists)
 
 		it "should ensure the URL is downloaded and updated in the cache", ->
 			@UrlCache._ensureUrlIsInCache
