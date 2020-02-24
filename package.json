@@ -30,7 +30,7 @@
     "lynx": "0.0.11",
     "metrics-sharelatex": "^2.3.0",
     "mkdirp": "0.3.5",
-    "mysql": "2.6.2",
+    "mysql": "2.14.0",
     "request": "^2.21.0",
     "sequelize": "^4.38.0",
     "settings-sharelatex": "git+https://github.com/sharelatex/settings-sharelatex.git#v1.1.0",
