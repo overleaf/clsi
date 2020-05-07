@@ -12,8 +12,7 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-let UrlFetcher
-const request = require('request').defaults({ jar: false })
+const request = require('requestretry').defaults({ jar: false })
 const fs = require('fs')
 const logger = require('logger-sharelatex')
 const settings = require('settings-sharelatex')
@@ -51,7 +50,12 @@ module.exports = UrlFetcher = {
     )
 
     logger.log({ url, filePath }, 'started downloading url to cache')
-    const urlStream = request.get({ url, timeout: oneMinute })
+    const urlStream = request.get({
+      url,
+      timeout: oneMinute,
+      retryDelay: 1000,
+      maxAttempts: 3
+    })
     urlStream.pause() // stop data flowing until we are ready
 
     // attach handlers before setting up pipes

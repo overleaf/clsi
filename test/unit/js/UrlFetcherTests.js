@@ -21,7 +21,7 @@ describe('UrlFetcher', function() {
     this.url = 'https://www.example.com/file/here?query=string'
     return (this.UrlFetcher = SandboxedModule.require(modulePath, {
       requires: {
-        request: {
+        requestretry: {
           defaults: (this.defaults = sinon.stub().returns((this.request = {})))
         },
         fs: (this.fs = {}),
