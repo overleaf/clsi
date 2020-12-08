@@ -24,9 +24,11 @@ const Settings = require('settings-sharelatex')
 const crypto = require('crypto')
 
 const OutputFileOptimiser = require('./OutputFileOptimiser')
+const ContentCacheManager = require('./ContentCacheManager')
 
 module.exports = OutputCacheManager = {
   CACHE_SUBDIR: '.cache/clsi',
+  CONTENT_SUBDIR: '.cache/content',
   ARCHIVE_SUBDIR: '.archive/clsi',
   // build id is HEXDATE-HEXRANDOM from Date.now()and RandomBytes
   // for backwards compatibility, make the randombytes part optional
@@ -71,7 +73,16 @@ module.exports = OutputCacheManager = {
         outputFiles,
         compileDir,
         buildId,
-        callback
+        function (err, result) {
+          if (err != null) {
+            return callback(err)
+          }
+          OutputCacheManager.saveStreamsInContentDir(
+            result,
+            compileDir,
+            callback
+          )
+        }
       )
     })
   },
@@ -137,7 +148,7 @@ module.exports = OutputCacheManager = {
             const newFile = _.clone(file)
             const [src, dst] = Array.from([
               Path.join(compileDir, file.path),
-              Path.join(cacheDir, file.path)
+              Path.join(cacheDir, file.path),
             ])
             return OutputCacheManager._checkFileIsSafe(src, function (
               err,
@@ -189,12 +200,54 @@ module.exports = OutputCacheManager = {
               // let file expiry run in the background, expire all previous files if per-user
               return OutputCacheManager.expireOutputFiles(cacheRoot, {
                 keep: buildId,
-                limit: perUser ? 1 : null
+                limit: perUser ? 1 : null,
               })
             }
           }
         )
       }
+    })
+  },
+
+  saveStreamsInContentDir(outputFiles, compileDir, callback) {
+    console.log('OUTPUT', outputFiles, 'COMPILEDIR', compileDir)
+    const cacheRoot = Path.join(compileDir, OutputCacheManager.CONTENT_SUBDIR)
+    // check if content dir exists
+    OutputCacheManager.ensureContentDir(cacheRoot, function (err, contentDir) {
+      console.log('ERR', err, 'CONTENT DIR', contentDir)
+      callback(null, outputFiles)
+    })
+  },
+
+  ensureContentDir(contentRoot, callback) {
+    fse.ensureDir(contentRoot, function (err) {
+      if (err != null) {
+        return callback(err)
+      }
+      fs.readdir(contentRoot, function (err, results) {
+        console.log('READDIR', results)
+        const dirs = results.sort()
+        validDirs = dirs.filter((dir) => BUILD_REGEX.test(dir))
+        if (validDirs.length > 0) {
+          console.log('GOT VALID DIR', validDirs[0])
+          callback(null, validDirs[0])
+        } else {
+          // make a content directory
+          OutputCacheManager.generateBuildId(function (err, contentId) {
+            if (err) {
+              return callback(err)
+            }
+            console.log('CONTENT ROOT', contentRoot, 'CONTENT ID', contentId)
+            const contentDir = Path.join(contentRoot, contentId)
+            fse.ensureDir(contentDir, function (err) {
+              if (err) {
+                return callback(err)
+              }
+              return callback(null, contentDir)
+            })
+          })
+        }
+      })
     })
   },
 
@@ -217,7 +270,7 @@ module.exports = OutputCacheManager = {
         function (file, cb) {
           const [src, dst] = Array.from([
             Path.join(compileDir, file.path),
-            Path.join(archiveDir, file.path)
+            Path.join(archiveDir, file.path),
           ])
           return OutputCacheManager._checkFileIsSafe(src, function (
             err,
@@ -392,7 +445,7 @@ module.exports = OutputCacheManager = {
       return callback(null, true)
     }
     return callback(null, false)
-  }
+  },
 }
 
 function __guard__(value, transform) {
