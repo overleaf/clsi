@@ -210,12 +210,29 @@ module.exports = OutputCacheManager = {
   },
 
   saveStreamsInContentDir(outputFiles, compileDir, callback) {
-    console.log('OUTPUT', outputFiles, 'COMPILEDIR', compileDir)
     const cacheRoot = Path.join(compileDir, OutputCacheManager.CONTENT_SUBDIR)
     // check if content dir exists
     OutputCacheManager.ensureContentDir(cacheRoot, function (err, contentDir) {
-      console.log('ERR', err, 'CONTENT DIR', contentDir)
-      callback(null, outputFiles)
+      const outputFile = outputFiles.find((x) => x.path == 'output.pdf')
+      if (outputFile) {
+        // possibly we should copy the file from the build dir here
+        const outputFilePath = OutputCacheManager.path(
+          outputFile.build,
+          outputFile.path
+        )
+        ContentCacheManager.update(contentDir, outputFilePath, function (
+          err,
+          contentRanges
+        ) {
+          if (err) {
+            return callback(err)
+          }
+          outputFile.ranges = contentRanges
+          callback(null, outputFiles)
+        })
+      } else {
+        callback(null, outputFiles)
+      }
     })
   },
 
@@ -225,19 +242,16 @@ module.exports = OutputCacheManager = {
         return callback(err)
       }
       fs.readdir(contentRoot, function (err, results) {
-        console.log('READDIR', results)
         const dirs = results.sort()
-        validDirs = dirs.filter((dir) => BUILD_REGEX.test(dir))
-        if (validDirs.length > 0) {
-          console.log('GOT VALID DIR', validDirs[0])
-          callback(null, validDirs[0])
+        contentId = dirs.find((dir) => OutputCacheManager.BUILD_REGEX.test(dir))
+        if (contentId) {
+          callback(null, Path.join(contentRoot, contentId))
         } else {
           // make a content directory
           OutputCacheManager.generateBuildId(function (err, contentId) {
             if (err) {
               return callback(err)
             }
-            console.log('CONTENT ROOT', contentRoot, 'CONTENT ID', contentId)
             const contentDir = Path.join(contentRoot, contentId)
             fse.ensureDir(contentDir, function (err) {
               if (err) {
