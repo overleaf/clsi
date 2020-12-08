@@ -5,6 +5,7 @@
 const { callbackify } = require('util')
 const fs = require('fs')
 const crypto = require('crypto')
+const Path = require('path')
 
 /**
  *
@@ -20,6 +21,7 @@ async function update(contentDir, filePath) {
     for (const pdfStream of pdfStreams) {
       const hash = pdfStreamHash(pdfStream.buffers)
       ranges.push({ start: pdfStream.start, end: pdfStream.end, hash })
+      await writePdfStream(contentDir, hash, pdfStream.buffers)
     }
   }
   return ranges
@@ -79,6 +81,18 @@ function pdfStreamHash(buffers) {
     hash.update(buffer)
   }
   return hash.digest('hex')
+}
+
+async function writePdfStream(dir, hash, buffers) {
+  const filename = Path.join(dir, hash)
+  const file = await fs.promises.open(filename, 'w')
+  try {
+    for (const buffer of buffers) {
+      await file.write(buffer)
+    }
+  } finally {
+    await file.close()
+  }
 }
 
 module.exports = { update: callbackify(update) }

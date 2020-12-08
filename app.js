@@ -10,6 +10,7 @@ const Metrics = require('@overleaf/metrics')
 Metrics.initialize('clsi')
 
 const CompileController = require('./app/js/CompileController')
+const ContentController = require('./app/js/ContentController')
 const Settings = require('settings-sharelatex')
 const logger = require('logger-sharelatex')
 logger.initialize('clsi')
@@ -143,6 +144,11 @@ app.get(
       OutputCacheManager.path(req.params.build_id, `/${req.params[0]}`)
     return staticServer(req, res, next)
   }
+)
+
+app.get(
+  '/project/:project_id/user/:user_id/content/:hash',
+  ContentController.getPdfRange
 )
 
 app.get('/project/:project_id/build/:build_id/output/*', function (
