@@ -132,6 +132,9 @@ module.exports = CompileController = {
                   if (file.ranges != null) {
                     record.ranges = file.ranges
                   }
+                  if (file.size != null) {
+                    record.size = file.size
+                  }
                   return record
                 })
               }

@@ -228,7 +228,13 @@ module.exports = OutputCacheManager = {
             return callback(err)
           }
           outputFile.ranges = contentRanges
-          callback(null, outputFiles)
+          fs.stat(outputFilePath, (err, stat) => {
+            if (err) {
+              return callback(err)
+            }
+            outputFile.size = stat.size
+            callback(null, outputFiles)
+          })
         })
       } else {
         callback(null, outputFiles)
