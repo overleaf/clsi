@@ -116,18 +116,24 @@ module.exports = CompileController = {
               compile: {
                 status,
                 error: (error != null ? error.message : undefined) || error,
-                outputFiles: outputFiles.map((file) => ({
-                  url:
-                    `${Settings.apis.clsi.url}/project/${request.project_id}` +
-                    (request.user_id != null
-                      ? `/user/${request.user_id}`
-                      : '') +
-                    (file.build != null ? `/build/${file.build}` : '') +
-                    `/output/${file.path}`,
-                  path: file.path,
-                  type: file.type,
-                  build: file.build
-                }))
+                outputFiles: outputFiles.map((file) => {
+                  const record = {
+                    url:
+                      `${Settings.apis.clsi.url}/project/${request.project_id}` +
+                      (request.user_id != null
+                        ? `/user/${request.user_id}`
+                        : '') +
+                      (file.build != null ? `/build/${file.build}` : '') +
+                      `/output/${file.path}`,
+                    path: file.path,
+                    type: file.type,
+                    build: file.build
+                  }
+                  if (file.ranges != null) {
+                    record.ranges = file.ranges
+                  }
+                  return record
+                })
               }
             })
           })
