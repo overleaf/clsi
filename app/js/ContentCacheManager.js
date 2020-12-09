@@ -85,6 +85,13 @@ function pdfStreamHash(buffers) {
 
 async function writePdfStream(dir, hash, buffers) {
   const filename = Path.join(dir, hash)
+  try {
+    await fs.promises.stat(filename)
+    // The file exists. Do not rewrite the content.
+    // It would change the modified-time of the file and hence invalidate the
+    //  ETags used for client side caching via browser internals.
+    return
+  } catch (e) {}
   const file = await fs.promises.open(filename, 'w')
   try {
     for (const buffer of buffers) {
