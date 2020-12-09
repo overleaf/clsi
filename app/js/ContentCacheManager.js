@@ -7,6 +7,9 @@ const fs = require('fs')
 const crypto = require('crypto')
 const Path = require('path')
 
+// in prod, this value could get bumped -- balance between bandwidth vs req/s
+const MIN_CHUNK_SIZE = 1024
+
 /**
  *
  * @param {String} contentDir path to directory where content hash files are cached
@@ -19,6 +22,7 @@ async function update(contentDir, filePath) {
   for await (const chunk of stream) {
     const pdfStreams = extractor.consume(chunk)
     for (const pdfStream of pdfStreams) {
+      if (pdfStream.end - pdfStream.start < MIN_CHUNK_SIZE) continue
       const hash = pdfStreamHash(pdfStream.buffers)
       ranges.push({ start: pdfStream.start, end: pdfStream.end, hash })
       await writePdfStream(contentDir, hash, pdfStream.buffers)
