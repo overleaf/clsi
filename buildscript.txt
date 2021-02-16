@@ -1,5 +1,5 @@
 clsi
---data-dirs=cache,compiles,db
+--data-dirs=cache,compiles,db,output
 --dependencies=
 --docker-repos=gcr.io/overleaf-ops
 --env-add=
