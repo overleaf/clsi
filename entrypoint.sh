@@ -13,6 +13,8 @@ chown node:node /app/compiles
 chown node:node /app/db
 
 # make synctex available for remount in compiles
+mkdir -p /app/bin/synctex-mount
+chown node:node /app/bin/synctex-mount
 cp /app/bin/synctex /app/bin/synctex-mount/synctex
 
 exec runuser -u node -- "$@"
