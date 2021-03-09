@@ -32,6 +32,13 @@ module.exports = ResourceWriter = {
     if (callback == null) {
       callback = function (error, resourceList) {}
     }
+    if (request.imageOptim) {
+      request.resources.forEach((resource) => {
+        if (resource.url) {
+          resource.url = `${resource.url}?style=imageOptim`
+        }
+      })
+    }
     if (request.syncType === 'incremental') {
       logger.log(
         { project_id: request.project_id, user_id: request.user_id },

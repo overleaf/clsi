@@ -73,6 +73,14 @@ module.exports = RequestParser = {
         default: false,
         type: 'boolean'
       })
+      response.imageOptim = this._parseAttribute(
+        'imageOptim',
+        compile.options.imageOptim,
+        {
+          default: false,
+          type: 'boolean'
+        }
+      )
       response.check = this._parseAttribute('check', compile.options.check, {
         type: 'string'
       })
