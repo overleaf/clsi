@@ -157,7 +157,7 @@ module.exports = OutputCacheManager = {
             const newFile = _.clone(file)
             const [src, dst] = Array.from([
               Path.join(compileDir, file.path),
-              Path.join(cacheDir, file.path),
+              Path.join(cacheDir, file.path)
             ])
             return OutputCacheManager._checkFileIsSafe(src, function (
               err,
@@ -209,7 +209,7 @@ module.exports = OutputCacheManager = {
               // let file expiry run in the background, expire all previous files if per-user
               return OutputCacheManager.expireOutputFiles(cacheRoot, {
                 keep: buildId,
-                limit: perUser ? 1 : null,
+                limit: perUser ? 1 : null
               })
             }
           }
@@ -226,7 +226,7 @@ module.exports = OutputCacheManager = {
       if (outputFile) {
         // possibly we should copy the file from the build dir here
         const outputFilePath = Path.join(
-          compileDir,
+          outputDir,
           OutputCacheManager.path(outputFile.build, outputFile.path)
         )
         ContentCacheManager.update(contentDir, outputFilePath, function (
@@ -301,7 +301,7 @@ module.exports = OutputCacheManager = {
         function (file, cb) {
           const [src, dst] = Array.from([
             Path.join(compileDir, file.path),
-            Path.join(archiveDir, file.path),
+            Path.join(archiveDir, file.path)
           ])
           return OutputCacheManager._checkFileIsSafe(src, function (
             err,
@@ -476,7 +476,7 @@ module.exports = OutputCacheManager = {
       return callback(null, true)
     }
     return callback(null, false)
-  },
+  }
 }
 
 function __guard__(value, transform) {
