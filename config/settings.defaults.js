@@ -63,7 +63,9 @@ module.exports = {
   texliveOpenoutAny: process.env.TEXLIVE_OPENOUT_ANY,
   sentry: {
     dsn: process.env.SENTRY_DSN
-  }
+  },
+
+  enablePdfCaching: process.env.ENABLE_PDF_CACHING === 'true'
 }
 
 if (process.env.ALLOWED_COMPILE_GROUPS) {

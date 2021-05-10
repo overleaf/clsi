@@ -78,6 +78,9 @@ module.exports = OutputCacheManager = {
           if (err != null) {
             return callback(err)
           }
+          if (!Settings.enablePdfCaching) {
+            return callback(null, result)
+          }
           OutputCacheManager.saveStreamsInContentDir(
             result,
             compileDir,
