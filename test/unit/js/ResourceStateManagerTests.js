@@ -12,7 +12,6 @@
 const SandboxedModule = require('sandboxed-module')
 const sinon = require('sinon')
 const { expect } = require('chai')
-const should = require('chai').should()
 const modulePath = require('path').join(
   __dirname,
   '../../../app/js/ResourceStateManager'
@@ -26,7 +25,6 @@ describe('ResourceStateManager', function () {
       singleOnly: true,
       requires: {
         fs: (this.fs = {}),
-        'logger-sharelatex': { log: sinon.stub(), err: sinon.stub() },
         './SafeReader': (this.SafeReader = {})
       }
     })
@@ -119,6 +117,32 @@ describe('ResourceStateManager', function () {
         return this.callback
           .calledWithMatch(null, this.resources)
           .should.equal(true)
+      })
+    })
+
+    describe('when the state file is not present', function () {
+      beforeEach(function () {
+        this.SafeReader.readFile = sinon.stub().callsArg(3)
+        return this.ResourceStateManager.checkProjectStateMatches(
+          this.state,
+          this.basePath,
+          this.callback
+        )
+      })
+
+      it('should read the resource file', function () {
+        return this.SafeReader.readFile
+          .calledWith(this.resourceFileName)
+          .should.equal(true)
+      })
+
+      it('should call the callback with an error', function () {
+        this.callback
+          .calledWith(sinon.match(Errors.FilesOutOfSyncError))
+          .should.equal(true)
+
+        const message = this.callback.args[0][0].message
+        expect(message).to.include('invalid state for incremental update')
       })
     })
 

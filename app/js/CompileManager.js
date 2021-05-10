@@ -46,6 +46,9 @@ const getCompileName = function (project_id, user_id) {
 const getCompileDir = (project_id, user_id) =>
   Path.join(Settings.path.compilesDir, getCompileName(project_id, user_id))
 
+const getOutputDir = (project_id, user_id) =>
+  Path.join(Settings.path.outputDir, getCompileName(project_id, user_id))
+
 module.exports = CompileManager = {
   doCompileWithLock(request, callback) {
     if (callback == null) {
@@ -72,6 +75,8 @@ module.exports = CompileManager = {
       callback = function (error, outputFiles) {}
     }
     const compileDir = getCompileDir(request.project_id, request.user_id)
+    const outputDir = getOutputDir(request.project_id, request.user_id)
+
     let timer = new Metrics.Timer('write-to-disk')
     logger.log(
       { project_id: request.project_id, user_id: request.user_id },
@@ -294,6 +299,7 @@ module.exports = CompileManager = {
                   return OutputCacheManager.saveOutputFiles(
                     outputFiles,
                     compileDir,
+                    outputDir,
                     (error, newOutputFiles) => callback(null, newOutputFiles)
                   )
                 }
@@ -323,6 +329,7 @@ module.exports = CompileManager = {
     }
 
     const compileDir = getCompileDir(project_id, user_id)
+    const outputDir = getOutputDir(project_id, user_id)
 
     return CompileManager._checkDirectory(compileDir, function (err, exists) {
       if (err != null) {
@@ -332,7 +339,13 @@ module.exports = CompileManager = {
         return callback()
       } // skip removal if no directory present
 
-      const proc = child_process.spawn('rm', ['-r', compileDir])
+      const proc = child_process.spawn('rm', [
+        '-r',
+        '-f',
+        '--',
+        compileDir,
+        outputDir
+      ])
 
       proc.on('error', callback)
 
@@ -343,7 +356,9 @@ module.exports = CompileManager = {
         if (code === 0) {
           return callback(null)
         } else {
-          return callback(new Error(`rm -r ${compileDir} failed: ${stderr}`))
+          return callback(
+            new Error(`rm -r ${compileDir} ${outputDir} failed: ${stderr}`)
+          )
         }
       })
     })
@@ -416,7 +431,15 @@ module.exports = CompileManager = {
     })
   }, // directory exists
 
-  syncFromCode(project_id, user_id, file_name, line, column, callback) {
+  syncFromCode(
+    project_id,
+    user_id,
+    file_name,
+    line,
+    column,
+    imageName,
+    callback
+  ) {
     // If LaTeX was run in a virtual environment, the file path that synctex expects
     // might not match the file path on the host. The .synctex.gz file however, will be accessed
     // wherever it is on the host.
@@ -429,22 +452,28 @@ module.exports = CompileManager = {
     const compileDir = getCompileDir(project_id, user_id)
     const synctex_path = `${base_dir}/output.pdf`
     const command = ['code', synctex_path, file_path, line, column]
-    CompileManager._runSynctex(project_id, user_id, command, function (
-      error,
-      stdout
-    ) {
-      if (error != null) {
-        return callback(error)
+    CompileManager._runSynctex(
+      project_id,
+      user_id,
+      command,
+      imageName,
+      function (error, stdout) {
+        if (error != null) {
+          return callback(error)
+        }
+        logger.log(
+          { project_id, user_id, file_name, line, column, command, stdout },
+          'synctex code output'
+        )
+        return callback(
+          null,
+          CompileManager._parseSynctexFromCodeOutput(stdout)
+        )
       }
-      logger.log(
-        { project_id, user_id, file_name, line, column, command, stdout },
-        'synctex code output'
-      )
-      return callback(null, CompileManager._parseSynctexFromCodeOutput(stdout))
-    })
+    )
   },
 
-  syncFromPdf(project_id, user_id, page, h, v, callback) {
+  syncFromPdf(project_id, user_id, page, h, v, imageName, callback) {
     if (callback == null) {
       callback = function (error, filePositions) {}
     }
@@ -453,22 +482,25 @@ module.exports = CompileManager = {
     const base_dir = Settings.path.synctexBaseDir(compileName)
     const synctex_path = `${base_dir}/output.pdf`
     const command = ['pdf', synctex_path, page, h, v]
-    CompileManager._runSynctex(project_id, user_id, command, function (
-      error,
-      stdout
-    ) {
-      if (error != null) {
-        return callback(error)
+    CompileManager._runSynctex(
+      project_id,
+      user_id,
+      command,
+      imageName,
+      function (error, stdout) {
+        if (error != null) {
+          return callback(error)
+        }
+        logger.log(
+          { project_id, user_id, page, h, v, stdout },
+          'synctex pdf output'
+        )
+        return callback(
+          null,
+          CompileManager._parseSynctexFromPdfOutput(stdout, base_dir)
+        )
       }
-      logger.log(
-        { project_id, user_id, page, h, v, stdout },
-        'synctex pdf output'
-      )
-      return callback(
-        null,
-        CompileManager._parseSynctexFromPdfOutput(stdout, base_dir)
-      )
-    })
+    )
   },
 
   _checkFileExists(dir, filename, callback) {
@@ -498,7 +530,7 @@ module.exports = CompileManager = {
     })
   },
 
-  _runSynctex(project_id, user_id, command, callback) {
+  _runSynctex(project_id, user_id, command, imageName, callback) {
     if (callback == null) {
       callback = function (error, stdout) {}
     }
@@ -518,9 +550,10 @@ module.exports = CompileManager = {
         compileName,
         command,
         directory,
-        Settings.clsi && Settings.clsi.docker
-          ? Settings.clsi.docker.image
-          : undefined,
+        imageName ||
+          (Settings.clsi && Settings.clsi.docker
+            ? Settings.clsi.docker.image
+            : undefined),
         timeout,
         {},
         compileGroup,

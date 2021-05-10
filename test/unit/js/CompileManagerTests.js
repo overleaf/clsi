@@ -15,7 +15,6 @@
  */
 const SandboxedModule = require('sandboxed-module')
 const sinon = require('sinon')
-require('chai').should()
 const modulePath = require('path').join(
   __dirname,
   '../../../app/js/CompileManager'
@@ -34,7 +33,8 @@ describe('CompileManager', function () {
         './OutputCacheManager': (this.OutputCacheManager = {}),
         'settings-sharelatex': (this.Settings = {
           path: {
-            compilesDir: '/compiles/dir'
+            compilesDir: '/compiles/dir',
+            outputDir: '/output/dir'
           },
           synctexBaseDir() {
             return '/compile'
@@ -46,7 +46,6 @@ describe('CompileManager', function () {
           }
         }),
 
-        'logger-sharelatex': (this.logger = { log: sinon.stub(), info() {} }),
         child_process: (this.child_process = {}),
         './CommandRunner': (this.CommandRunner = {}),
         './DraftModeManager': (this.DraftModeManager = {}),
@@ -166,6 +165,7 @@ describe('CompileManager', function () {
       this.env = {}
       this.Settings.compileDir = 'compiles'
       this.compileDir = `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}`
+      this.outputDir = `${this.Settings.path.outputDir}/${this.project_id}-${this.user_id}`
       this.ResourceWriter.syncResourcesToDisk = sinon
         .stub()
         .callsArgWith(2, null, this.resources)
@@ -175,7 +175,7 @@ describe('CompileManager', function () {
         .callsArgWith(2, null, this.output_files)
       this.OutputCacheManager.saveOutputFiles = sinon
         .stub()
-        .callsArgWith(2, null, this.build_files)
+        .callsArgWith(3, null, this.build_files)
       this.DraftModeManager.injectDraftMode = sinon.stub().callsArg(1)
       return (this.TikzManager.checkMainFile = sinon.stub().callsArg(3, false))
     })
@@ -312,7 +312,10 @@ describe('CompileManager', function () {
         return this.child_process.spawn
           .calledWith('rm', [
             '-r',
-            `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}`
+            '-f',
+            '--',
+            `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}`,
+            `${this.Settings.path.outputDir}/${this.project_id}-${this.user_id}`
           ])
           .should.equal(true)
       })
@@ -348,7 +351,10 @@ describe('CompileManager', function () {
         return this.child_process.spawn
           .calledWith('rm', [
             '-r',
-            `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}`
+            '-f',
+            '--',
+            `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}`,
+            `${this.Settings.path.outputDir}/${this.project_id}-${this.user_id}`
           ])
           .should.equal(true)
       })
@@ -357,7 +363,7 @@ describe('CompileManager', function () {
         this.callback.calledWithExactly(sinon.match(Error)).should.equal(true)
 
         this.callback.args[0][0].message.should.equal(
-          `rm -r ${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id} failed: ${this.error}`
+          `rm -r ${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id} ${this.Settings.path.outputDir}/${this.project_id}-${this.user_id} failed: ${this.error}`
         )
       })
     })
@@ -388,13 +394,14 @@ describe('CompileManager', function () {
         this.stdout = `NODE\t${this.page}\t${this.h}\t${this.v}\t${this.width}\t${this.height}\n`
         this.CommandRunner.run = sinon
           .stub()
-          .callsArgWith(7, null, { stdout: this.stdout })
+          .yields(null, { stdout: this.stdout })
         return this.CompileManager.syncFromCode(
           this.project_id,
           this.user_id,
           this.file_name,
           this.line,
           this.column,
+          '',
           this.callback
         )
       })
@@ -422,7 +429,7 @@ describe('CompileManager', function () {
           .should.equal(true)
       })
 
-      return it('should call the callback with the parsed output', function () {
+      it('should call the callback with the parsed output', function () {
         return this.callback
           .calledWith(null, [
             {
@@ -434,6 +441,44 @@ describe('CompileManager', function () {
             }
           ])
           .should.equal(true)
+      })
+
+      describe('with a custom imageName', function () {
+        const customImageName = 'foo/bar:tag-0'
+        beforeEach(function () {
+          this.CommandRunner.run.reset()
+          this.CompileManager.syncFromCode(
+            this.project_id,
+            this.user_id,
+            this.file_name,
+            this.line,
+            this.column,
+            customImageName,
+            this.callback
+          )
+        })
+
+        it('should execute the synctex binary in a custom docker image', function () {
+          const synctex_path = `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}/output.pdf`
+          const file_path = `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}/${this.file_name}`
+          this.CommandRunner.run
+            .calledWith(
+              `${this.project_id}-${this.user_id}`,
+              [
+                '/opt/synctex',
+                'code',
+                synctex_path,
+                file_path,
+                this.line,
+                this.column
+              ],
+              `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}`,
+              customImageName,
+              60000,
+              {}
+            )
+            .should.equal(true)
+        })
       })
     })
 
@@ -454,6 +499,7 @@ describe('CompileManager', function () {
           this.page,
           this.h,
           this.v,
+          '',
           this.callback
         )
       })
@@ -473,7 +519,7 @@ describe('CompileManager', function () {
           .should.equal(true)
       })
 
-      return it('should call the callback with the parsed output', function () {
+      it('should call the callback with the parsed output', function () {
         return this.callback
           .calledWith(null, [
             {
@@ -483,6 +529,36 @@ describe('CompileManager', function () {
             }
           ])
           .should.equal(true)
+      })
+
+      describe('with a custom imageName', function () {
+        const customImageName = 'foo/bar:tag-1'
+        beforeEach(function () {
+          this.CommandRunner.run.reset()
+          this.CompileManager.syncFromPdf(
+            this.project_id,
+            this.user_id,
+            this.page,
+            this.h,
+            this.v,
+            customImageName,
+            this.callback
+          )
+        })
+
+        it('should execute the synctex binary in a custom docker image', function () {
+          const synctex_path = `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}/output.pdf`
+          this.CommandRunner.run
+            .calledWith(
+              `${this.project_id}-${this.user_id}`,
+              ['/opt/synctex', 'pdf', synctex_path, this.page, this.h, this.v],
+              `${this.Settings.path.compilesDir}/${this.project_id}-${this.user_id}`,
+              customImageName,
+              60000,
+              {}
+            )
+            .should.equal(true)
+        })
       })
     })
   })

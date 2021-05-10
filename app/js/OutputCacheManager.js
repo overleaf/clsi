@@ -27,9 +27,9 @@ const OutputFileOptimiser = require('./OutputFileOptimiser')
 const ContentCacheManager = require('./ContentCacheManager')
 
 module.exports = OutputCacheManager = {
-  CACHE_SUBDIR: '.cache/clsi',
-  CONTENT_SUBDIR: '.cache/content',
-  ARCHIVE_SUBDIR: '.archive/clsi',
+  CONTENT_SUBDIR: 'content',
+  CACHE_SUBDIR: 'generated-files',
+  ARCHIVE_SUBDIR: 'archived-logs',
   // build id is HEXDATE-HEXRANDOM from Date.now()and RandomBytes
   // for backwards compatibility, make the randombytes part optional
   BUILD_REGEX: /^[0-9a-f]+(-[0-9a-f]+)?$/,
@@ -61,7 +61,7 @@ module.exports = OutputCacheManager = {
     })
   },
 
-  saveOutputFiles(outputFiles, compileDir, callback) {
+  saveOutputFiles(outputFiles, compileDir, outputDir, callback) {
     if (callback == null) {
       callback = function (error) {}
     }
@@ -72,6 +72,7 @@ module.exports = OutputCacheManager = {
       return OutputCacheManager.saveOutputFilesInBuildDir(
         outputFiles,
         compileDir,
+        outputDir,
         buildId,
         function (err, result) {
           if (err != null) {
@@ -80,6 +81,7 @@ module.exports = OutputCacheManager = {
           OutputCacheManager.saveStreamsInContentDir(
             result,
             compileDir,
+            outputDir,
             callback
           )
         }
@@ -87,16 +89,22 @@ module.exports = OutputCacheManager = {
     })
   },
 
-  saveOutputFilesInBuildDir(outputFiles, compileDir, buildId, callback) {
+  saveOutputFilesInBuildDir(
+    outputFiles,
+    compileDir,
+    outputDir,
+    buildId,
+    callback
+  ) {
     // make a compileDir/CACHE_SUBDIR/build_id directory and
     // copy all the output files into it
     if (callback == null) {
       callback = function (error) {}
     }
-    const cacheRoot = Path.join(compileDir, OutputCacheManager.CACHE_SUBDIR)
+    const cacheRoot = Path.join(outputDir, OutputCacheManager.CACHE_SUBDIR)
     // Put the files into a new cache subdirectory
     const cacheDir = Path.join(
-      compileDir,
+      outputDir,
       OutputCacheManager.CACHE_SUBDIR,
       buildId
     )
@@ -113,6 +121,7 @@ module.exports = OutputCacheManager = {
       OutputCacheManager.archiveLogs(
         outputFiles,
         compileDir,
+        outputDir,
         buildId,
         function (err) {
           if (err != null) {
@@ -148,7 +157,7 @@ module.exports = OutputCacheManager = {
             const newFile = _.clone(file)
             const [src, dst] = Array.from([
               Path.join(compileDir, file.path),
-              Path.join(cacheDir, file.path)
+              Path.join(cacheDir, file.path),
             ])
             return OutputCacheManager._checkFileIsSafe(src, function (
               err,
@@ -200,7 +209,7 @@ module.exports = OutputCacheManager = {
               // let file expiry run in the background, expire all previous files if per-user
               return OutputCacheManager.expireOutputFiles(cacheRoot, {
                 keep: buildId,
-                limit: perUser ? 1 : null
+                limit: perUser ? 1 : null,
               })
             }
           }
@@ -209,8 +218,8 @@ module.exports = OutputCacheManager = {
     })
   },
 
-  saveStreamsInContentDir(outputFiles, compileDir, callback) {
-    const cacheRoot = Path.join(compileDir, OutputCacheManager.CONTENT_SUBDIR)
+  saveStreamsInContentDir(outputFiles, compileDir, outputDir, callback) {
+    const cacheRoot = Path.join(outputDir, OutputCacheManager.CONTENT_SUBDIR)
     // check if content dir exists
     OutputCacheManager.ensureContentDir(cacheRoot, function (err, contentDir) {
       const outputFile = outputFiles.find((x) => x.path === 'output.pdf')
@@ -273,12 +282,12 @@ module.exports = OutputCacheManager = {
     })
   },
 
-  archiveLogs(outputFiles, compileDir, buildId, callback) {
+  archiveLogs(outputFiles, compileDir, outputDir, buildId, callback) {
     if (callback == null) {
       callback = function (error) {}
     }
     const archiveDir = Path.join(
-      compileDir,
+      outputDir,
       OutputCacheManager.ARCHIVE_SUBDIR,
       buildId
     )
@@ -292,7 +301,7 @@ module.exports = OutputCacheManager = {
         function (file, cb) {
           const [src, dst] = Array.from([
             Path.join(compileDir, file.path),
-            Path.join(archiveDir, file.path)
+            Path.join(archiveDir, file.path),
           ])
           return OutputCacheManager._checkFileIsSafe(src, function (
             err,
@@ -467,7 +476,7 @@ module.exports = OutputCacheManager = {
       return callback(null, true)
     }
     return callback(null, false)
-  }
+  },
 }
 
 function __guard__(value, transform) {
