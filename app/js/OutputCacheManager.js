@@ -227,6 +227,7 @@ module.exports = OutputCacheManager = {
     OutputCacheManager.ensureContentDir(cacheRoot, function (err, contentDir) {
       const outputFile = outputFiles.find((x) => x.path === 'output.pdf')
       if (outputFile) {
+        outputFile.contentId = Path.basename(contentDir)
         // possibly we should copy the file from the build dir here
         const outputFilePath = Path.join(
           outputDir,

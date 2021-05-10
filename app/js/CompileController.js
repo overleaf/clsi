@@ -129,7 +129,8 @@ module.exports = CompileController = {
                       `/output/${file.path}`,
                     path: file.path,
                     type: file.type,
-                    build: file.build
+                    build: file.build,
+                    contentId: file.contentId
                   }
                   if (file.ranges != null) {
                     record.ranges = file.ranges
