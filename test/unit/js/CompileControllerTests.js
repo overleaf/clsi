@@ -155,7 +155,9 @@ describe('CompileController', function () {
                   url: `${this.Settings.apis.clsi.url}/project/${this.project_id}/build/${file.build}/output/${file.path}`,
                   path: file.path,
                   type: file.type,
-                  build: file.build
+                  build: file.build,
+                  // gets dropped by JSON.stringify
+                  contentId: undefined
                 }
               })
             }
@@ -196,7 +198,9 @@ describe('CompileController', function () {
                   url: `${this.Settings.apis.clsi.url}/project/${this.project_id}/build/${file.build}/output/${file.path}`,
                   path: file.path,
                   type: file.type,
-                  build: file.build
+                  build: file.build,
+                  // gets dropped by JSON.stringify
+                  contentId: undefined
                 }
               })
             }

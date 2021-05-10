@@ -175,7 +175,7 @@ describe('CompileManager', function () {
         .callsArgWith(2, null, this.output_files)
       this.OutputCacheManager.saveOutputFiles = sinon
         .stub()
-        .callsArgWith(3, null, this.build_files)
+        .yields(null, this.build_files)
       this.DraftModeManager.injectDraftMode = sinon.stub().callsArg(1)
       return (this.TikzManager.checkMainFile = sinon.stub().callsArg(3, false))
     })

@@ -297,6 +297,7 @@ module.exports = CompileManager = {
                     return callback(error)
                   }
                   return OutputCacheManager.saveOutputFiles(
+                    request,
                     outputFiles,
                     compileDir,
                     outputDir,

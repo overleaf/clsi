@@ -61,7 +61,7 @@ module.exports = OutputCacheManager = {
     })
   },
 
-  saveOutputFiles(outputFiles, compileDir, outputDir, callback) {
+  saveOutputFiles(request, outputFiles, compileDir, outputDir, callback) {
     if (callback == null) {
       callback = function (error) {}
     }
@@ -78,7 +78,7 @@ module.exports = OutputCacheManager = {
           if (err != null) {
             return callback(err)
           }
-          if (!Settings.enablePdfCaching) {
+          if (!Settings.enablePdfCaching || !request.enablePdfCaching) {
             return callback(null, result)
           }
           OutputCacheManager.saveStreamsInContentDir(
