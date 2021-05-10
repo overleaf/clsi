@@ -172,6 +172,10 @@ app.get(
 )
 
 app.get(
+  '/project/:projectId/content/:contentId/:hash',
+  ContentController.getPdfRange
+)
+app.get(
   '/project/:projectId/user/:userId/content/:contentId/:hash',
   ContentController.getPdfRange
 )
