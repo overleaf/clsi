@@ -249,11 +249,13 @@ module.exports = CompileManager = {
                 return callback(error)
               }
               Metrics.inc('compiles-succeeded')
+              stats = stats || {}
               const object = stats || {}
               for (metric_key in object) {
                 metric_value = object[metric_key]
                 Metrics.count(metric_key, metric_value)
               }
+              timings = timings || {}
               const object1 = timings || {}
               for (metric_key in object1) {
                 metric_value = object1[metric_key]
@@ -301,7 +303,12 @@ module.exports = CompileManager = {
                     outputFiles,
                     compileDir,
                     outputDir,
-                    (error, newOutputFiles) => callback(null, newOutputFiles)
+                    (err, newOutputFiles) => {
+                      // Emit compile time.
+                      timings.compile = ts
+
+                      callback(null, newOutputFiles, stats, timings)
+                    }
                   )
                 }
               )
