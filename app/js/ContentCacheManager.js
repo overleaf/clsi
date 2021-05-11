@@ -6,6 +6,7 @@ const { callbackify } = require('util')
 const fs = require('fs')
 const crypto = require('crypto')
 const Path = require('path')
+const Settings = require('settings-sharelatex')
 
 // in prod, this value could get bumped -- balance between bandwidth vs req/s
 const MIN_CHUNK_SIZE = 1024
@@ -101,6 +102,10 @@ async function writePdfStream(dir, hash, buffers) {
     return false
   } catch (e) {}
   const file = await fs.promises.open(filename, 'w')
+  if (Settings.enablePdfCachingDark) {
+    // Write an empty file in dark mode.
+    buffers = []
+  }
   try {
     for (const buffer of buffers) {
       await file.write(buffer)

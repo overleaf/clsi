@@ -269,7 +269,6 @@ module.exports = OutputCacheManager = {
 
       const outputFile = outputFiles.find((x) => x.path === 'output.pdf')
       if (outputFile) {
-        outputFile.contentId = Path.basename(contentDir)
         // possibly we should copy the file from the build dir here
         const outputFilePath = Path.join(
           outputDir,
@@ -283,7 +282,14 @@ module.exports = OutputCacheManager = {
           if (err) return callback(err, outputFiles)
           const [contentRanges, newContentRanges] = ranges
 
-          outputFile.ranges = contentRanges
+          if (Settings.enablePdfCachingDark) {
+            // In dark mode we are doing the computation only and do not emit
+            //  any ranges to the frontend.
+          } else {
+            outputFile.contentId = Path.basename(contentDir)
+            outputFile.ranges = contentRanges
+          }
+
           timings['compute-pdf-caching'] = timer.done()
           stats['pdf-caching-n-ranges'] = contentRanges.length
           stats['pdf-caching-total-ranges-size'] = contentRanges.reduce(
