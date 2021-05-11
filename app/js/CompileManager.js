@@ -304,6 +304,17 @@ module.exports = CompileManager = {
                     compileDir,
                     outputDir,
                     (err, newOutputFiles) => {
+                      if (err) {
+                        const {
+                          project_id: projectId,
+                          user_id: userId
+                        } = request
+                        logger.err(
+                          { projectId, userId, err },
+                          'failed to save output files'
+                        )
+                      }
+
                       // Emit compile time.
                       timings.compile = ts
 
