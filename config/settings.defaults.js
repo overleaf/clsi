@@ -66,7 +66,9 @@ module.exports = {
   },
 
   enablePdfCaching: process.env.ENABLE_PDF_CACHING === 'true',
-  enablePdfCachingDark: process.env.ENABLE_PDF_CACHING_DARK === 'true'
+  enablePdfCachingDark: process.env.ENABLE_PDF_CACHING_DARK === 'true',
+  pdfCachingMinChunkSize:
+    parseInt(process.env.PDF_CACHING_MIN_CHUNK_SIZE, 10) || 1024
 }
 
 if (process.env.ALLOWED_COMPILE_GROUPS) {
