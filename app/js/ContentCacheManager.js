@@ -6,6 +6,7 @@ const { callbackify } = require('util')
 const fs = require('fs')
 const crypto = require('crypto')
 const Path = require('path')
+const Settings = require('settings-sharelatex')
 
 // in prod, this value could get bumped -- balance between bandwidth vs req/s
 const MIN_CHUNK_SIZE = 1024
@@ -19,16 +20,20 @@ async function update(contentDir, filePath) {
   const stream = fs.createReadStream(filePath)
   const extractor = new PdfStreamsExtractor()
   const ranges = []
+  const newRanges = []
   for await (const chunk of stream) {
     const pdfStreams = extractor.consume(chunk)
     for (const pdfStream of pdfStreams) {
       if (pdfStream.end - pdfStream.start < MIN_CHUNK_SIZE) continue
       const hash = pdfStreamHash(pdfStream.buffers)
-      ranges.push({ start: pdfStream.start, end: pdfStream.end, hash })
-      await writePdfStream(contentDir, hash, pdfStream.buffers)
+      const range = { start: pdfStream.start, end: pdfStream.end, hash }
+      ranges.push(range)
+      if (await writePdfStream(contentDir, hash, pdfStream.buffers)) {
+        newRanges.push(range)
+      }
     }
   }
-  return ranges
+  return [ranges, newRanges]
 }
 
 class PdfStreamsExtractor {
@@ -94,9 +99,13 @@ async function writePdfStream(dir, hash, buffers) {
     // The file exists. Do not rewrite the content.
     // It would change the modified-time of the file and hence invalidate the
     //  ETags used for client side caching via browser internals.
-    return
+    return false
   } catch (e) {}
   const file = await fs.promises.open(filename, 'w')
+  if (Settings.enablePdfCachingDark) {
+    // Write an empty file in dark mode.
+    buffers = []
+  }
   try {
     for (const buffer of buffers) {
       await file.write(buffer)
@@ -104,6 +113,7 @@ async function writePdfStream(dir, hash, buffers) {
   } finally {
     await file.close()
   }
+  return true
 }
 
 module.exports = { update: callbackify(update) }

@@ -49,7 +49,9 @@ module.exports = CompileController = {
           }
           return CompileManager.doCompileWithLock(request, function (
             error,
-            outputFiles
+            outputFiles,
+            stats,
+            timings
           ) {
             let code, status
             if (outputFiles == null) {
@@ -118,6 +120,8 @@ module.exports = CompileController = {
               compile: {
                 status,
                 error: (error != null ? error.message : undefined) || error,
+                stats,
+                timings,
                 outputFiles: outputFiles.map((file) => {
                   const record = {
                     url:

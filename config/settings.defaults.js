@@ -65,7 +65,8 @@ module.exports = {
     dsn: process.env.SENTRY_DSN
   },
 
-  enablePdfCaching: process.env.ENABLE_PDF_CACHING === 'true'
+  enablePdfCaching: process.env.ENABLE_PDF_CACHING === 'true',
+  enablePdfCachingDark: process.env.ENABLE_PDF_CACHING_DARK === 'true'
 }
 
 if (process.env.ALLOWED_COMPILE_GROUPS) {
