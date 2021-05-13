@@ -324,7 +324,7 @@ const loadHttpServer = express()
 
 loadHttpServer.post('/state/up', function (req, res, next) {
   STATE = 'up'
-  logger.info('getting message to set server to down')
+  logger.info('getting message to set server to up')
   return res.sendStatus(204)
 })
 
