@@ -76,8 +76,18 @@ app.param('build_id', function (req, res, next, buildId) {
   }
 })
 
+// return 503 Unavailable immediately when server is shutting down
+function checkServerIsUp(req, res, next) {
+  if (STATE !== 'up') {
+    res.sendStatus(503)
+  } else {
+    next()
+  }
+}
+
 app.post(
   '/project/:project_id/compile',
+  checkServerIsUp,
   bodyParser.json({ limit: Settings.compileSizeLimit }),
   CompileController.compile
 )
@@ -93,6 +103,7 @@ app.post('/project/:project_id/status', CompileController.status)
 // Per-user containers
 app.post(
   '/project/:project_id/user/:user_id/compile',
+  checkServerIsUp,
   bodyParser.json({ limit: Settings.compileSizeLimit }),
   CompileController.compile
 )
@@ -276,7 +287,16 @@ app.use(function (error, req, res, next) {
     // inspect container returns EPIPE when shutting down
     return res.sendStatus(503) // send 503 Unavailable response
   } else {
-    logger.error({ err: error, url: req.url }, 'server error')
+    logger.error(
+      {
+        err: error,
+        url: req.url,
+        code: error.code,
+        statusCode: error.statusCode,
+        state: STATE
+      },
+      'server error'
+    )
     return res.sendStatus((error != null ? error.statusCode : undefined) || 500)
   }
 })
