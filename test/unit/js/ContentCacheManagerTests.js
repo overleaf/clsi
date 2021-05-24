@@ -31,6 +31,21 @@ class FakeFile {
   }
 }
 
+const SAMPLE_CHUNKS = [
+    Buffer.from('abcstr'),
+    Buffer.from('eam123endstreamABC'),
+    Buffer.from('str'),
+    Buffer.from('eam(||'),
+    Buffer.from(')end'),
+    Buffer.from('stream-_~stream!$%/=endstream')
+  ]
+
+const SAMPLE_REMOVED_CHUNKS = [
+    Buffer.from('abcstr'),
+    Buffer.from('eam123endstreamABC'),
+    Buffer.from('stream!$%/=endstream')
+]
+
 function hash(blob) {
   const hash = crypto.createHash('sha256')
   hash.update(blob)
@@ -124,18 +139,17 @@ describe('ContentCacheManager', function () {
       const h1 = hash(RANGE_1)
       const h2 = hash(RANGE_2)
       const h3 = hash(RANGE_3)
+      const START_1 = SAMPLE_CHUNKS.join('').indexOf(RANGE_1)
+      const END_1 = START_1 + RANGE_1.length
+      const START_2 = SAMPLE_CHUNKS.join('').indexOf(RANGE_2)
+      const END_2 = START_2 + RANGE_2.length
+      const START_3 = SAMPLE_CHUNKS.join('').indexOf(RANGE_3)
+      const END_3 = START_3 + RANGE_3.length
       function runWithSplitStream(done) {
         fs.createReadStream
           .withArgs(pdfPath)
           .returns(
-            Readable.from([
-              Buffer.from('abcstr'),
-              Buffer.from('eam123endstreamABC'),
-              Buffer.from('str'),
-              Buffer.from('eam(||'),
-              Buffer.from(')end'),
-              Buffer.from('stream-_~stream!$%/=endstream')
-            ])
+            Readable.from(SAMPLE_CHUNKS)
           )
         run(pdfPath, done)
       }
@@ -150,18 +164,18 @@ describe('ContentCacheManager', function () {
       it('should find the correct offsets', function () {
         expect(contentRanges).to.deep.equal([
           {
-            start: 3,
-            end: 21,
-            hash: hash(RANGE_1)
+            start: START_1,
+           end: END_1,
+         hash: hash(RANGE_1)
           },
           {
-            start: 24,
-            end: 43,
+            start: START_2,
+            end: END_2,
             hash: hash(RANGE_2)
           },
           {
-            start: 46,
-            end: 66,
+            start: START_3,
+            end: END_3,
             hash: hash(RANGE_3)
           }
         ])
@@ -204,16 +218,17 @@ describe('ContentCacheManager', function () {
       })
 
       describe('when re-running with one stream removed', function () {
+        const START_1 = SAMPLE_REMOVED_CHUNKS.join('').indexOf(RANGE_1)
+        const END_1 = START_1 + RANGE_1.length
+        const START_3 = SAMPLE_REMOVED_CHUNKS.join('').indexOf(RANGE_3)
+        const END_3 = START_3 + RANGE_3.length
+
         function runWithOneSplitStreamRemoved(done) {
           fs.createReadStream
             .withArgs(pdfPath)
             .returns(
-              Readable.from([
-                Buffer.from('abcstr'),
-                Buffer.from('eam123endstreamABC'),
-                Buffer.from('stream!$%/=endstream')
-              ])
-            )
+              Readable.from(SAMPLE_REMOVED_CHUNKS)
+          )
           run(pdfPath, done)
         }
         beforeEach(function (done) {
@@ -227,13 +242,13 @@ describe('ContentCacheManager', function () {
         it('should find the correct offsets', function () {
           expect(contentRanges).to.deep.equal([
             {
-              start: 3,
-              end: 21,
+              start: START_1,
+              end: END_1,
               hash: hash(RANGE_1)
             },
             {
-              start: 24,
-              end: 44,
+              start: START_3,
+              end: END_3,
               hash: hash(RANGE_3)
             }
           ])
@@ -289,13 +304,13 @@ describe('ContentCacheManager', function () {
           it('should still find the correct offsets', function () {
             expect(contentRanges).to.deep.equal([
               {
-                start: 3,
-                end: 21,
+                start: START_1,
+                end: END_1,
                 hash: hash(RANGE_1)
               },
               {
-                start: 24,
-                end: 44,
+                start: START_3,
+                end: END_3,
                 hash: hash(RANGE_3)
               }
             ])
