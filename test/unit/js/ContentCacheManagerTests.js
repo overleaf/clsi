@@ -32,18 +32,18 @@ class FakeFile {
 }
 
 const SAMPLE_CHUNKS = [
-    Buffer.from('abcstr'),
-    Buffer.from('eam123endstreamABC'),
+    Buffer.from("%PDF-1.5 abc\n1 0 obj\n<< preamble1 >>\nstr"),
+    Buffer.from("eam123endstreamABC\n2 0 obj\n<< preamble2 >>\n"),
     Buffer.from('str'),
     Buffer.from('eam(||'),
     Buffer.from(')end'),
-    Buffer.from('stream-_~stream!$%/=endstream')
+    Buffer.from("stream-_~\n3 0 obj\n<< preamble3 >>\nstream!$%/=endstream")
   ]
 
 const SAMPLE_REMOVED_CHUNKS = [
-    Buffer.from('abcstr'),
-    Buffer.from('eam123endstreamABC'),
-    Buffer.from('stream!$%/=endstream')
+  Buffer.from("%PDF-1.5 abc\n54321 0 obj\n<< preamble1 >>\nstr"),
+  Buffer.from("eam123endstreamABC\n"),
+  Buffer.from("98765 0 obj\n<< preamble3 >>\nstream!$%/=endstream")
 ]
 
 function hash(blob) {
