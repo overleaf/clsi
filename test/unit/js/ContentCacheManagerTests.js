@@ -32,18 +32,20 @@ class FakeFile {
 }
 
 const SAMPLE_CHUNKS = [
-    Buffer.from("%PDF-1.5 abc\n1 0 obj\n<< preamble1 >>\nstr"),
-    Buffer.from("eam123endstreamABC\n2 0 obj\n<< preamble2 >>\n"),
-    Buffer.from('str'),
-    Buffer.from('eam(||'),
-    Buffer.from(')end'),
-    Buffer.from("stream-_~\n3 0 obj\n<< preamble3 >>\nstream!$%/=endstream")
-  ]
+  Buffer.from('%PDF-1.5 abc\n1 0 obj\n<< preamble1 >>\nstr'),
+  Buffer.from('eam123endstream\nendobj\nABC\n2 0 obj\n<< preamble2 >>\n'),
+  Buffer.from('str'),
+  Buffer.from('eam(||'),
+  Buffer.from(')end'),
+  Buffer.from(
+    'stream\r\nendobj\r\n-_~\n3 0 obj\n<< preamble3 >>\nstream!$%/=endstream\nendobj\n42'
+  )
+]
 
 const SAMPLE_REMOVED_CHUNKS = [
-  Buffer.from("%PDF-1.5 abc\n54321 0 obj\n<< preamble1 >>\nstr"),
-  Buffer.from("eam123endstreamABC\n"),
-  Buffer.from("98765 0 obj\n<< preamble3 >>\nstream!$%/=endstream")
+  Buffer.from('%PDF-1.5 abc\n54321 0 obj\n<< preamble1 >>\nstr'),
+  Buffer.from('eam123endstream\nendobj\nABC\n'),
+  Buffer.from('98765 0 obj\n<< preamble3 >>\nstream!$%/=endstream\nendobj\n42')
 ]
 
 function hash(blob) {
@@ -148,9 +150,7 @@ describe('ContentCacheManager', function () {
       function runWithSplitStream(done) {
         fs.createReadStream
           .withArgs(pdfPath)
-          .returns(
-            Readable.from(SAMPLE_CHUNKS)
-          )
+          .returns(Readable.from(SAMPLE_CHUNKS))
         run(pdfPath, done)
       }
       beforeEach(function (done) {
@@ -165,8 +165,8 @@ describe('ContentCacheManager', function () {
         expect(contentRanges).to.deep.equal([
           {
             start: START_1,
-           end: END_1,
-         hash: hash(RANGE_1)
+            end: END_1,
+            hash: hash(RANGE_1)
           },
           {
             start: START_2,
@@ -203,9 +203,9 @@ describe('ContentCacheManager', function () {
                 [h3, 0]
               ],
               hashSize: [
-                [h1, 18],
-                [h2, 19],
-                [h3, 20]
+                [h1, RANGE_1.length],
+                [h2, RANGE_2.length],
+                [h3, RANGE_3.length]
               ]
             }),
             closed: true
@@ -226,9 +226,7 @@ describe('ContentCacheManager', function () {
         function runWithOneSplitStreamRemoved(done) {
           fs.createReadStream
             .withArgs(pdfPath)
-            .returns(
-              Readable.from(SAMPLE_REMOVED_CHUNKS)
-          )
+            .returns(Readable.from(SAMPLE_REMOVED_CHUNKS))
           run(pdfPath, done)
         }
         beforeEach(function (done) {
@@ -276,9 +274,9 @@ describe('ContentCacheManager', function () {
                   [h3, 0]
                 ],
                 hashSize: [
-                  [h1, 18],
-                  [h2, 19],
-                  [h3, 20]
+                  [h1, RANGE_1.length],
+                  [h2, RANGE_2.length],
+                  [h3, RANGE_3.length]
                 ]
               }),
               closed: true
@@ -333,8 +331,8 @@ describe('ContentCacheManager', function () {
                     [h3, 0]
                   ],
                   hashSize: [
-                    [h1, 18],
-                    [h3, 20]
+                    [h1, RANGE_1.length],
+                    [h3, RANGE_3.length]
                   ]
                 }),
                 closed: true
