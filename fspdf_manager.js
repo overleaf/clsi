@@ -1,7 +1,7 @@
-const { LocalPdfManager } = require('pdfjs-dist/lib/core/pdf_manager');
 const { PDFDocument } = require('pdfjs-dist/lib/core/document');
-const { FileStream } = require('./filestream.js')
+const { LocalPdfManager } = require('pdfjs-dist/lib/core/pdf_manager');
 const { MissingDataException } = require('pdfjs-dist/lib/core/core_utils')
+const { FileStream } = require('./filestream.js')
 
 class FileSystemPdfManager extends LocalPdfManager {
     constructor(docId, options, password) {
@@ -30,7 +30,7 @@ class FileSystemPdfManager extends LocalPdfManager {
         return this.stream.requestRange(begin, end)
     }
 
-    requestLoadedStream() { 
+    requestLoadedStream() {
         console.log("requestLoadedStream")
     }
 
