@@ -1,39 +1,45 @@
-const { Stream } = require("pdfjs-dist/lib/core/stream");
+const { Stream } = require('pdfjs-dist/lib/core/stream')
 const { MissingDataException } = require('pdfjs-dist/lib/core/core_utils')
 
 const BUF_SIZE = 1024 // read from the file in 1024 byte pages
 class FSStream extends Stream {
   constructor(fh, start, length, dict, cachedBytes) {
-    const dummy = Buffer.from("");
-    super(dummy, start, length, dict);
+    const dummy = Buffer.from('')
+    super(dummy, start, length, dict)
     delete this.bytes
     this.fh = fh
-    this.cachedBytes = cachedBytes || [];
+    this.cachedBytes = cachedBytes || []
   }
 
   get length() {
-    return this.end - this.start;
+    return this.end - this.start
   }
 
   get isEmpty() {
-    return this.length === 0;
+    return this.length === 0
   }
 
   // Manage cached reads from the file
 
   requestRange(begin, end) {
     // expand small ranges to read a larger amount
-    if (end - begin < BUF_SIZE) { end = begin + BUF_SIZE }
-    end = Math.min(end, this.length);
+    if (end - begin < BUF_SIZE) {
+      end = begin + BUF_SIZE
+    }
+    end = Math.min(end, this.length)
     // keep a cache of previous reads with {begin,end,buffer} values
-    const result = { begin: begin, end: end, buffer: Buffer.alloc(end - begin, 0) }
+    const result = {
+      begin: begin,
+      end: end,
+      buffer: Buffer.alloc(end - begin, 0)
+    }
     this.cachedBytes.push(result)
     return this.fh.read(result.buffer, 0, end - begin, begin)
   }
 
   _ensureGetPos(pos) {
-    const found = this.cachedBytes.find(x => {
-      return (x.begin <= pos && pos < x.end)
+    const found = this.cachedBytes.find((x) => {
+      return x.begin <= pos && pos < x.end
     })
     if (!found) {
       throw new MissingDataException(pos, pos + 1)
@@ -42,9 +48,9 @@ class FSStream extends Stream {
   }
 
   _ensureGetRange(begin, end) {
-    end = Math.min(end, this.length); // BG: handle overflow case
-    const found = this.cachedBytes.find(x => {
-      return (x.begin <= begin && end <= x.end)
+    end = Math.min(end, this.length) // BG: handle overflow case
+    const found = this.cachedBytes.find((x) => {
+      return x.begin <= begin && end <= x.end
     })
     if (!found) {
       throw new MissingDataException(begin, end)
@@ -57,7 +63,7 @@ class FSStream extends Stream {
   }
 
   _readBytes(found, pos, end) {
-    return found.buffer.subarray(pos - found.begin, end - found.begin);
+    return found.buffer.subarray(pos - found.begin, end - found.begin)
   }
 
   // handle accesses to the bytes
@@ -69,7 +75,7 @@ class FSStream extends Stream {
   getByte() {
     const pos = this.pos
     if (this.pos >= this.end) {
-      return -1;
+      return -1
     }
     const found = this._ensureGetPos(pos)
     return this._readByte(found, this.pos++)
@@ -78,28 +84,28 @@ class FSStream extends Stream {
   // BG: for a range, end is not included (see Buffer.subarray for example)
 
   ensureBytes(length, forceClamped = false) {
-    const pos = this.pos;
+    const pos = this.pos
     this._ensureGetRange(pos, pos + length)
   }
 
   getBytes(length, forceClamped = false) {
-    const pos = this.pos;
-    const strEnd = this.end;
+    const pos = this.pos
+    const strEnd = this.end
 
     const found = this._ensureGetRange(pos, pos + length)
     if (!length) {
-      const subarray = this._readBytes(found, pos, strEnd);
+      const subarray = this._readBytes(found, pos, strEnd)
       // `this.bytes` is always a `Uint8Array` here.
-      return forceClamped ? new Uint8ClampedArray(subarray) : subarray;
+      return forceClamped ? new Uint8ClampedArray(subarray) : subarray
     }
-    let end = pos + length;
+    let end = pos + length
     if (end > strEnd) {
-      end = strEnd;
+      end = strEnd
     }
-    this.pos = end;
+    this.pos = end
     const subarray = this._readBytes(found, pos, end)
     // `this.bytes` is always a `Uint8Array` here.
-    return forceClamped ? new Uint8ClampedArray(subarray) : subarray;
+    return forceClamped ? new Uint8ClampedArray(subarray) : subarray
   }
 
   getByteRange() {
@@ -108,11 +114,11 @@ class FSStream extends Stream {
   }
 
   reset() {
-    this.pos = this.start;
+    this.pos = this.start
   }
 
   moveStart() {
-    this.start = this.pos;
+    this.start = this.pos
   }
 
   makeSubStream(start, length, dict = null) {
@@ -124,9 +130,8 @@ class FSStream extends Stream {
     if (!length) {
       length = this.end - start
     }
-    return new FSStream(this.fh, start, length, dict, this.cachedBytes);
+    return new FSStream(this.fh, start, length, dict, this.cachedBytes)
   }
 }
-
 
 module.exports = { FSStream }
