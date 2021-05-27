@@ -8,7 +8,7 @@ class FSStream extends Stream {
     super(dummy, start, length, dict);
     delete this.bytes
     this.fh = fh
-    this.cachedBytes = cachedBytes || new Array();
+    this.cachedBytes = cachedBytes || [];
   }
 
   get length() {

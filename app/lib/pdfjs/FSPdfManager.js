@@ -30,13 +30,9 @@ class FSPdfManager extends LocalPdfManager {
         return this.stream.requestRange(begin, end)
     }
 
-    requestLoadedStream() {
-        console.log("requestLoadedStream")
-    }
+    requestLoadedStream() {}
 
-    onLoadedStream() {
-        console.log("onLoadedStream")
-    }
+    onLoadedStream() {}
 
     terminate(reason) { }
 }
