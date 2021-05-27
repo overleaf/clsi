@@ -1,9 +1,8 @@
 const { Stream } = require("pdfjs-dist/lib/core/stream");
 const { MissingDataException } = require('pdfjs-dist/lib/core/core_utils')
-const fs = require('fs')
 
 const BUF_SIZE = 1024 // read from the file in 1024 byte pages
-class FileStream extends Stream {
+class FSStream extends Stream {
   constructor(fh, start, length, dict, cachedBytes) {
     const dummy = Buffer.from("");
     super(dummy, start, length, dict);
@@ -26,7 +25,7 @@ class FileStream extends Stream {
     // expand small ranges to read a larger amount
     if (end - begin < BUF_SIZE) { end = begin + BUF_SIZE }
     end = Math.min(end, this.length);
-    // keep a cache of previous reads with {begin,end,buffer} values 
+    // keep a cache of previous reads with {begin,end,buffer} values
     const result = { begin: begin, end: end, buffer: Buffer.alloc(end - begin, 0) }
     this.cachedBytes.push(result)
     return this.fh.read(result.buffer, 0, end - begin, begin)
@@ -59,7 +58,7 @@ class FileStream extends Stream {
 
   ensureByte(pos) {
     if (this._getPos(pos)) {
-      return; // we've got it in the cache 
+      return; // we've got it in the cache
     } else {
       throw new MissingDataException(pos, pos + 1);
     }
@@ -143,9 +142,9 @@ class FileStream extends Stream {
     if (!length) {
       length = this.end - start
     }
-    return new FileStream(this.fh, start, length, dict, this.cachedBytes);
+    return new FSStream(this.fh, start, length, dict, this.cachedBytes);
   }
 }
 
 
-module.exports = { FileStream }
+module.exports = { FSStream }

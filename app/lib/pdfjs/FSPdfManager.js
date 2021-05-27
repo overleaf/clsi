@@ -1,12 +1,12 @@
 const { PDFDocument } = require('pdfjs-dist/lib/core/document');
 const { LocalPdfManager } = require('pdfjs-dist/lib/core/pdf_manager');
 const { MissingDataException } = require('pdfjs-dist/lib/core/core_utils')
-const { FileStream } = require('./filestream.js')
+const { FSStream } = require('./FSStream')
 
-class FileSystemPdfManager extends LocalPdfManager {
+class FSPdfManager extends LocalPdfManager {
     constructor(docId, options, password) {
         super(docId, Buffer.from("dummy"));
-        this.stream = new FileStream(options.fh, 0, options.size);
+        this.stream = new FSStream(options.fh, 0, options.size);
         this.pdfDocument = new PDFDocument(this, this.stream);
     }
 
@@ -42,5 +42,5 @@ class FileSystemPdfManager extends LocalPdfManager {
 }
 
 module.exports = {
-    FileSystemPdfManager: FileSystemPdfManager
+  FSPdfManager
 }
