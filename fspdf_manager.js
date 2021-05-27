@@ -1,24 +1,16 @@
 const { LocalPdfManager } = require('pdfjs-dist/lib/core/pdf_manager');
 const { PDFDocument } = require('pdfjs-dist/lib/core/document');
-const { FSStream } = require('./fsstream.js')
-const primitives = require('pdfjs-dist/lib/core/primitives');
+const { FileStream } = require('./filestream.js')
 const { MissingDataException } = require('pdfjs-dist/lib/core/core_utils')
 
-class FSPdfManager extends LocalPdfManager {
+class FileSystemPdfManager extends LocalPdfManager {
     constructor(docId, options, password) {
         super(docId, Buffer.from("dummy"));
-        this._docId = docId;
-        this._password = password;
-        // this._docBaseUrl = parseDocBaseUrl(docBaseUrl);
-        // this.evaluatorOptions = evaluatorOptions;
-        // this.enableXfa = enableXfa;
-        const stream = new FSStream(options.fd, 0, options.size);
-        this.pdfDocument = new PDFDocument(this, stream);
-        this._loadedStreamPromise = new Promise(() => { });
+        this.stream = new FileStream(options.fh, 0, options.size);
+        this.pdfDocument = new PDFDocument(this, this.stream);
     }
 
     async ensure(obj, prop, args) {
-        console.log("ensure", prop, args)
         try {
             const value = obj[prop];
             if (typeof value === "function") {
@@ -35,19 +27,20 @@ class FSPdfManager extends LocalPdfManager {
     }
 
     requestRange(begin, end) {
-        console.log("requestRange", begin, end)
-        return Promise.resolve();
+        return this.stream.requestRange(begin, end)
     }
 
-    requestLoadedStream() { }
+    requestLoadedStream() { 
+        console.log("requestLoadedStream")
+    }
 
     onLoadedStream() {
-        return this._loadedStreamPromise;
+        console.log("onLoadedStream")
     }
 
     terminate(reason) { }
 }
 
 module.exports = {
-    FSPdfManager
+    FileSystemPdfManager: FileSystemPdfManager
 }
