@@ -31,18 +31,24 @@ class FSStream extends Stream {
     return this.fh.read(result.buffer, 0, end - begin, begin)
   }
 
-  _getPos(pos) {
+  _ensureGetPos(pos) {
     const found = this.cachedBytes.find(x => {
       return (x.begin <= pos && pos < x.end)
     })
+    if (!found) {
+      throw new MissingDataException(pos, pos + 1)
+    }
     return found
   }
 
-  _getRange(begin, end) {
+  _ensureGetRange(begin, end) {
     end = Math.min(end, this.length); // BG: handle overflow case
     const found = this.cachedBytes.find(x => {
       return (x.begin <= begin && end <= x.end)
     })
+    if (!found) {
+      throw new MissingDataException(begin, end)
+    }
     return found
   }
 
@@ -57,11 +63,7 @@ class FSStream extends Stream {
   // handle accesses to the bytes
 
   ensureByte(pos) {
-    if (this._getPos(pos)) {
-      return; // we've got it in the cache
-    } else {
-      throw new MissingDataException(pos, pos + 1);
-    }
+    this._ensureGetPos(pos) // may throw a MissingDataException
   }
 
   getByte() {
@@ -69,36 +71,22 @@ class FSStream extends Stream {
     if (this.pos >= this.end) {
       return -1;
     }
-    this.ensureByte(pos)
-    const found = this._getPos(pos)
-    if (found) {
-      return this._readByte(found, this.pos++)
-    } else {
-      console.error("couldn't find byte in cache - shouldn't happen")
-    }
+    const found = this._ensureGetPos(pos)
+    return this._readByte(found, this.pos++)
   }
 
   // BG: for a range, end is not included (see Buffer.subarray for example)
 
   ensureBytes(length, forceClamped = false) {
     const pos = this.pos;
-    if (this._getRange(pos, pos + length)) {
-      return // we've got it in the cache
-    } else {
-      throw new MissingDataException(pos, pos + length);
-    }
+    this._ensureGetRange(pos, pos + length)
   }
 
   getBytes(length, forceClamped = false) {
     const pos = this.pos;
     const strEnd = this.end;
 
-    this.ensureBytes(length)
-
-    const found = this._getRange(pos, pos + length)
-    if (!found) {
-      console.error("couldn't find bytes in cache - shouldn't happen")
-    }
+    const found = this._ensureGetRange(pos, pos + length)
     if (!length) {
       const subarray = this._readBytes(found, pos, strEnd);
       // `this.bytes` is always a `Uint8Array` here.
