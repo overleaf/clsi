@@ -40,6 +40,7 @@ class FileStream extends Stream {
   }
 
   _getRange(begin, end) {
+    end = Math.min(end, this.length); // BG: handle overflow case
     const found = this.cachedBytes.find(x => {
       return (x.begin <= begin && end <= x.end)
     })
@@ -100,7 +101,7 @@ class FileStream extends Stream {
       console.error("couldn't find bytes in cache - shouldn't happen")
     }
     if (!length) {
-      const subarray = found.buffer.subarray(pos - found.start, strEnd - found.start);
+      const subarray = this._readBytes(found, pos, strEnd);
       // `this.bytes` is always a `Uint8Array` here.
       return forceClamped ? new Uint8ClampedArray(subarray) : subarray;
     }
