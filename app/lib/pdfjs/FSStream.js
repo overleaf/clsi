@@ -114,15 +114,9 @@ class FSStream extends Stream {
     return forceClamped ? new Uint8ClampedArray(subarray) : subarray;
   }
 
-  getByteRange(begin, end) {
-    throw "not implemented"  // this isn't needed as far as I can tell
-    // if (begin < 0) {
-    //   begin = 0;
-    // }
-    // if (end > this.end) {
-    //   end = this.end;
-    // }
-    // return this.bytes.subarray(begin, end);
+  getByteRange() {
+    // BG: this isn't needed as far as I can tell
+    throw new Error('not implemented')
   }
 
   reset() {
