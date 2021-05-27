@@ -2,10 +2,11 @@ const { Stream } = require('pdfjs-dist/lib/core/stream')
 const { MissingDataException } = require('pdfjs-dist/lib/core/core_utils')
 
 const BUF_SIZE = 1024 // read from the file in 1024 byte pages
+
 class FSStream extends Stream {
   constructor(fh, start, length, dict, cachedBytes) {
-    const dummy = Buffer.from('')
-    super(dummy, start, length, dict)
+    const nonEmptyDummyBuffer = Buffer.alloc(1, 0)
+    super(nonEmptyDummyBuffer, start, length, dict)
     delete this.bytes
     this.fh = fh
     this.cachedBytes = cachedBytes || []
