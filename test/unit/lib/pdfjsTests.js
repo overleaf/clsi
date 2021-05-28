@@ -45,6 +45,14 @@ async function backFillSnapshot(example, size) {
 }
 
 describe('pdfjs', function () {
+  describe('when the pdf is an empty file', function () {
+    it('should yield no entries', async function () {
+      const path = 'does/not/matter.pdf'
+      const table = await parseXrefTable(path, 0)
+      expect(table).to.deep.equal([])
+    })
+  })
+
   for (const example of EXAMPLES) {
     describe(example, function () {
       let size, snapshot
