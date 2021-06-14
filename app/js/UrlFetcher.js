@@ -19,6 +19,7 @@ const logger = require('logger-sharelatex')
 const settings = require('settings-sharelatex')
 const URL = require('url')
 const async = require('async')
+const { promisify } = require('util')
 
 const oneMinute = 60 * 1000
 
@@ -132,4 +133,8 @@ module.exports = UrlFetcher = {
       }
     })
   }
+}
+
+module.exports.promises = {
+  pipeUrlToFileWithRetry: promisify(UrlFetcher.pipeUrlToFileWithRetry)
 }

@@ -31,7 +31,9 @@ describe('ResourceWriter', function () {
         }),
         './ResourceStateManager': (this.ResourceStateManager = {}),
         wrench: (this.wrench = {}),
-        './UrlCache': (this.UrlCache = {}),
+        './UrlCache': (this.UrlCache = {
+          createProjectDir: sinon.stub().yields()
+        }),
         './OutputFileFinder': (this.OutputFileFinder = {}),
         './Metrics': (this.Metrics = {
           inc: sinon.stub(),
