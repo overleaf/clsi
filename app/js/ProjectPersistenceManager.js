@@ -14,14 +14,17 @@
 let ProjectPersistenceManager
 const UrlCache = require('./UrlCache')
 const CompileManager = require('./CompileManager')
-const db = require('./db')
-const dbQueue = require('./DbQueue')
 const async = require('async')
 const logger = require('logger-sharelatex')
 const oneDay = 24 * 60 * 60 * 1000
 const Settings = require('settings-sharelatex')
 const diskusage = require('diskusage')
 const { callbackify } = require('util')
+const Path = require('path')
+const fs = require('fs')
+
+// projectId -> timestamp mapping.
+const LAST_ACCESS = new Map()
 
 async function refreshExpiryTimeout() {
   const paths = [
@@ -60,20 +63,37 @@ module.exports = ProjectPersistenceManager = {
   },
 
   refreshExpiryTimeout: callbackify(refreshExpiryTimeout),
-  markProjectAsJustAccessed(project_id, callback) {
-    if (callback == null) {
-      callback = function (error) {}
-    }
-    const job = (cb) =>
-      db.Project.findOrCreate({ where: { project_id } })
-        .spread((project, created) =>
-          project
-            .update({ lastAccessed: new Date() })
-            .then(() => cb())
-            .error(cb)
+
+  init() {
+    fs.readdir(Settings.path.compilesDir, (err, projectIds) => {
+      if (err) {
+        logger.warn({ err }, 'cannot get project listing')
+        return
+      }
+
+      async.eachLimit(projectIds, 50, (projectId, cb) => {
+        const outputPdf = Path.join(
+          Settings.path.compilesDir,
+          projectId,
+          'output.pdf'
         )
-        .error(cb)
-    return dbQueue.queue.push(job, callback)
+        fs.stat(outputPdf, (err, stats) => {
+          if (err) {
+            // Schedule for immediate cleanup
+            LAST_ACCESS.set(projectId, 0)
+          } else {
+            // Cleanup eventually.
+            LAST_ACCESS.set(projectId, stats.mtime.getTime())
+          }
+          cb()
+        })
+      })
+    })
+  },
+
+  markProjectAsJustAccessed(project_id, callback) {
+    LAST_ACCESS.set(project_id, Date.now())
+    callback()
   },
 
   clearExpiredProjects(callback) {
@@ -158,38 +178,20 @@ module.exports = ProjectPersistenceManager = {
   },
 
   _clearProjectFromDatabase(project_id, callback) {
-    if (callback == null) {
-      callback = function (error) {}
-    }
-    logger.log({ project_id }, 'clearing project from database')
-    const job = (cb) =>
-      db.Project.destroy({ where: { project_id } })
-        .then(() => cb())
-        .error(cb)
-    return dbQueue.queue.push(job, callback)
+    LAST_ACCESS.delete(project_id)
+    callback()
   },
 
   _findExpiredProjectIds(callback) {
-    if (callback == null) {
-      callback = function (error, project_ids) {}
+    const expiredFrom = Date.now() - ProjectPersistenceManager.EXPIRY_TIMEOUT
+    const expiredProjectsIds = []
+    for (const [projectId, lastAccess] of LAST_ACCESS.entries()) {
+      if (lastAccess < expiredFrom) {
+        expiredProjectsIds.push(projectId)
+      }
     }
-    const job = function (cb) {
-      const keepProjectsFrom = new Date(
-        Date.now() - ProjectPersistenceManager.EXPIRY_TIMEOUT
-      )
-      const q = {}
-      q[db.op.lt] = keepProjectsFrom
-      return db.Project.findAll({ where: { lastAccessed: q } })
-        .then((projects) =>
-          cb(
-            null,
-            projects.map((project) => project.project_id)
-          )
-        )
-        .error(cb)
-    }
-
-    return dbQueue.queue.push(job, callback)
+    // ^ may be a fairly busy loop, continue detached.
+    setTimeout(() => callback(null, expiredProjectsIds), 0)
   }
 }
 

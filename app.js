@@ -32,6 +32,7 @@ const OutputCacheManager = require('./app/js/OutputCacheManager')
 const ContentCacheManager = require('./app/js/ContentCacheManager')
 
 require('./app/js/db').sync()
+ProjectPersistenceManager.init()
 
 const express = require('express')
 const bodyParser = require('body-parser')
