@@ -12,7 +12,6 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 let ProjectPersistenceManager
-const Metrics = require('./Metrics')
 const UrlCache = require('./UrlCache')
 const CompileManager = require('./CompileManager')
 const db = require('./db')
@@ -65,7 +64,6 @@ module.exports = ProjectPersistenceManager = {
     if (callback == null) {
       callback = function (error) {}
     }
-    const timer = new Metrics.Timer('db-bump-last-accessed')
     const job = (cb) =>
       db.Project.findOrCreate({ where: { project_id } })
         .spread((project, created) =>
@@ -75,10 +73,7 @@ module.exports = ProjectPersistenceManager = {
             .error(cb)
         )
         .error(cb)
-    dbQueue.queue.push(job, (error) => {
-      timer.done()
-      callback(error)
-    })
+    return dbQueue.queue.push(job, callback)
   },
 
   clearExpiredProjects(callback) {
