@@ -341,6 +341,11 @@ const loadTcpServer = net.createServer(function (socket) {
   }
 })
 
+process.on('SIGTERM', () => {
+  logger.warn('entering shutdown mode')
+  STATE = 'down'
+})
+
 const loadHttpServer = express()
 
 loadHttpServer.post('/state/up', function (req, res, next) {
