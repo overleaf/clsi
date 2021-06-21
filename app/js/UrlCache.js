@@ -19,6 +19,8 @@ const fse = require('fs-extra')
 const Path = require('path')
 const { callbackify } = require('util')
 
+const PENDING_DOWNLOADS = new Map()
+
 function getProjectDir(projectId) {
   return Path.join(Settings.path.clsiCacheDir, projectId)
 }
@@ -49,8 +51,23 @@ async function downloadUrlToFile(projectId, url, destPath, lastModified) {
       throw e
     }
   }
-  await UrlFetcher.promises.pipeUrlToFileWithRetry(url, cachePath)
+  await download(url, cachePath)
   await fs.promises.copyFile(cachePath, destPath)
+}
+
+async function download(url, cachePath) {
+  let pending = PENDING_DOWNLOADS.get(cachePath)
+  if (pending) {
+    return pending
+  }
+
+  pending = UrlFetcher.promises.pipeUrlToFileWithRetry(url, cachePath)
+  PENDING_DOWNLOADS.set(cachePath, pending)
+  try {
+    await pending
+  } finally {
+    PENDING_DOWNLOADS.delete(cachePath)
+  }
 }
 
 module.exports = {
