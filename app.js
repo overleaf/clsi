@@ -255,6 +255,7 @@ if (Settings.processLifespanLimitMs) {
   setTimeout(() => {
     logger.log('shutting down, process is too old')
     Settings.processTooOld = true
+    enterMaintenanceMode()
   }, Settings.processLifespanLimitMs)
 }
 
@@ -359,6 +360,11 @@ loadHttpServer.post('/state/maint', function (req, res, next) {
   logger.info('getting message to set server to maint')
   return res.sendStatus(204)
 })
+
+function enterMaintenanceMode() {
+  STATE = 'maint'
+  logger.info('setting server to maint')
+}
 
 const port =
   __guard__(
