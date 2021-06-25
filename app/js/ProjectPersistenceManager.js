@@ -65,19 +65,19 @@ module.exports = ProjectPersistenceManager = {
   refreshExpiryTimeout: callbackify(refreshExpiryTimeout),
 
   init() {
-    fs.readdir(Settings.path.compilesDir, (err, projectIds) => {
+    fs.readdir(Settings.path.compilesDir, (err, dirs) => {
       if (err) {
         logger.warn({ err }, 'cannot get project listing')
         return
       }
 
-      async.eachLimit(projectIds, 50, (projectId, cb) => {
-        const outputPdf = Path.join(
+      async.eachLimit(dirs, 50, (projectAndUserId, cb) => {
+        const compileDir = Path.join(
           Settings.path.compilesDir,
-          projectId,
-          'output.pdf'
+          projectAndUserId
         )
-        fs.stat(outputPdf, (err, stats) => {
+        const projectId = projectAndUserId.slice(0, 24)
+        fs.stat(compileDir, (err, stats) => {
           if (err) {
             // Schedule for immediate cleanup
             LAST_ACCESS.set(projectId, 0)
