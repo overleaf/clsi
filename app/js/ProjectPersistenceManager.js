@@ -68,26 +68,37 @@ module.exports = ProjectPersistenceManager = {
     fs.readdir(Settings.path.compilesDir, (err, dirs) => {
       if (err) {
         logger.warn({ err }, 'cannot get project listing')
-        return
+        dirs = []
       }
 
-      async.eachLimit(dirs, 50, (projectAndUserId, cb) => {
-        const compileDir = Path.join(
-          Settings.path.compilesDir,
-          projectAndUserId
-        )
-        const projectId = projectAndUserId.slice(0, 24)
-        fs.stat(compileDir, (err, stats) => {
-          if (err) {
-            // Schedule for immediate cleanup
-            LAST_ACCESS.set(projectId, 0)
-          } else {
-            // Cleanup eventually.
-            LAST_ACCESS.set(projectId, stats.mtime.getTime())
-          }
-          cb()
-        })
-      })
+      async.eachLimit(
+        dirs,
+        10,
+        (projectAndUserId, cb) => {
+          const compileDir = Path.join(
+            Settings.path.compilesDir,
+            projectAndUserId
+          )
+          const projectId = projectAndUserId.slice(0, 24)
+          fs.stat(compileDir, (err, stats) => {
+            if (err) {
+              // Schedule for immediate cleanup
+              LAST_ACCESS.set(projectId, 0)
+            } else {
+              // Cleanup eventually.
+              LAST_ACCESS.set(projectId, stats.mtime.getTime())
+            }
+            cb()
+          })
+        },
+        () => {
+          setInterval(() => {
+            ProjectPersistenceManager.refreshExpiryTimeout(() => {
+              ProjectPersistenceManager.clearExpiredProjects()
+            })
+          }, 10 * 60 * 1000)
+        }
+      )
     })
   },
 

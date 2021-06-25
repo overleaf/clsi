@@ -5,7 +5,6 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-const tenMinutes = 10 * 60 * 1000
 const Metrics = require('@overleaf/metrics')
 Metrics.initialize('clsi')
 
@@ -411,12 +410,6 @@ if (!module.parent) {
 }
 
 module.exports = app
-
-setInterval(() => {
-  ProjectPersistenceManager.refreshExpiryTimeout(() => {
-    ProjectPersistenceManager.clearExpiredProjects()
-  })
-}, tenMinutes)
 
 function __guard__(value, transform) {
   return typeof value !== 'undefined' && value !== null
