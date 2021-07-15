@@ -427,7 +427,12 @@ module.exports = CompileManager = {
         const age = now - stats.mtime
         const hasExpired = age > max_cache_age_ms
         if (hasExpired) {
-          return fse.remove(checkDir, cb)
+          // remove the compile directory and the output directory
+          const outputDir = Path.join(
+            Settings.path.outputDir,
+            Path.basename(checkDir)
+          )
+          return async.eachSeries([checkDir, outputDir], fse.remove, cb)
         } else {
           return cb()
         }
