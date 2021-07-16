@@ -101,6 +101,7 @@ if (process.env.DOCKER_RUNNER) {
       },
       socketPath: '/var/run/docker.sock',
       user: process.env.TEXLIVE_IMAGE_USER || 'tex',
+      readOnly: process.env.DOCKER_READONLY === 'true',
     },
     optimiseInDocker: true,
     expireProjectAfterIdleMs: 24 * 60 * 60 * 1000,
