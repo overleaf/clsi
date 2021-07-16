@@ -274,7 +274,7 @@ const DockerRunner = {
       options.HostConfig.Runtime = Settings.clsi.docker.runtime
     }
 
-    if (Settings.clsi.docker.Readonly) {
+    if (Settings.clsi.docker.readOnly) {
       options.HostConfig.ReadonlyRootfs = true
       options.HostConfig.Tmpfs = { '/tmp': 'rw,noexec,nosuid,size=65536k' }
       options.Volumes['/home/tex'] = {}
