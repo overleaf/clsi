@@ -32,7 +32,8 @@ module.exports = {
     outputDir: Path.resolve(__dirname, '../output'),
     clsiCacheDir: Path.resolve(__dirname, '../cache'),
     synctexBaseDir(projectId) {
-      return Path.join(this.compilesDir, projectId)
+      // HACK: The files are referenced as `/COMPILES_DIR/PROJECT_ID/./main.tex` in synctex.
+      return Path.join(this.compilesDir, projectId) + '/.'
     },
   },
 
